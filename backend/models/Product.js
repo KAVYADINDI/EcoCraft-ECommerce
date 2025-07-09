@@ -1,0 +1,41 @@
+import mongoose from 'mongoose';
+
+const productSchema = new mongoose.Schema({
+  artistID: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // Relationship: Product belongs to an artist
+    required: true
+  },
+  title: { type: String, required: true },
+  description: String,
+  price: { type: Number, required: true },
+  
+  // Detailed Information
+  materials: String,
+  dimensions: String,
+  careInstructions: String,
+  certified: { type: Boolean, default: false },
+  
+  // Logistics
+  shippingInfo: String,
+  returnPolicy: String,
+
+  // Visuals
+  images: [{ type: String }], // Store image URLs or file references
+  
+  // Chatbot-Searchable Tags
+  tags: [{
+    type: String
+    // keywords like category, type, color, room
+  }],
+  
+  quantityAvailable: { type: Number, default: 1 },
+  
+  //Review Summary
+  averageRating: { type: Number, default: 0 },
+  reviewCount: { type: Number, default: 0 },
+}, { timestamps: true });
+
+
+const productModel = mongoose.models.Product || mongoose.model('Product', productSchema);
+export default productModel;
