@@ -17,6 +17,15 @@ const userSchema = new mongoose.Schema({
   // For artists: origin story
   originStory: { type: String },
 
+  // status field for admin panel
+  status: {
+    type: String,
+    enum: ['request_received', 'waiting_for_documents', 'received_documents', 'approved', 'rejected'],
+    default: function() {
+      return this.role === 'artist' ? 'request_received' : undefined;
+    }
+  },
+
   // Personal Information (for both artists and customers)
   personalInfo: {
     address: { type: String },

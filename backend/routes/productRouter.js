@@ -8,7 +8,13 @@ const router = express.Router();
 router.post('/', upload.array('images', 5), async (req, res) => {
   try {
     const imageUrls = req.files ? req.files.map(file => file.path) : [];
-    const product = await Product.create({ ...req.body, images: imageUrls });
+    const tags = req.body.tags
+      ? req.body.tags.split(',').map(tag => tag.trim().toLowerCase())
+      : []; // Parse and normalize tags
+    const materials = req.body.materials
+      ? req.body.materials.split(',').map(material => material.trim().toLowerCase())
+      : []; // Parse and normalize materials
+    const product = await Product.create({ ...req.body, tags, materials, images: imageUrls });
     res.status(201).json(product);
   } catch (err) {
     console.error('POST /api/products error:', err.message, err.stack, err);
@@ -22,6 +28,16 @@ router.put('/:id', upload.array('images', 5), async (req, res) => {
     let updateData = { ...req.body };
     if (req.files && req.files.length > 0) {
       updateData.images = req.files.map(file => file.path);
+    }
+    if (updateData.tags) {
+      updateData.tags = Array.isArray(updateData.tags)
+        ? updateData.tags.map(tag => tag.trim().toLowerCase())
+        : updateData.tags.split(',').map(tag => tag.trim().toLowerCase()); // Ensure tags are stored as a list
+    }
+    if (updateData.materials) {
+      updateData.materials = Array.isArray(updateData.materials)
+        ? updateData.materials.map(material => material.trim().toLowerCase())
+        : updateData.materials.split(',').map(material => material.trim().toLowerCase()); // Ensure materials are stored as a list
     }
     const updated = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!updated) {

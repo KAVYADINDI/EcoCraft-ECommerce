@@ -16,21 +16,18 @@ const Login = () => {
       const res = await api.post('/auth/login', { email, password });
       const user = res.data?.user;
       const role = user?.role;
-      // Save userId, userName, and role in sessionStorage for session use
+      if (res.data?.token) {
+        localStorage.setItem('token', res.data.token);
+      }
       if (user?._id) {
-        sessionStorage.setItem('userId', user._id);
+        localStorage.setItem('userId', user._id); // Save user ID to localStorage for all roles
+        console.log('User ID saved to localStorage:', user._id);  
       }
-      if (user?.userID) {
-        sessionStorage.setItem('userName', user.userID);
-      } else if (user?.email) {
-        sessionStorage.setItem('userName', user.email);
-      }
-      sessionStorage.setItem('role', role);
       if (role === 'artist') {
         navigate('/artist/dashboard');
       } else if (role === 'admin') {
         navigate('/admin/dashboard');
-      } else {
+      } else if (role === 'customer') {
         navigate('/customer/dashboard');
       }
     } catch (err) {

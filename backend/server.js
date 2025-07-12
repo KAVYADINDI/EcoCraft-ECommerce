@@ -1,4 +1,3 @@
-
 import express from 'express'
 import cors from 'cors'
 import 'dotenv/config'
@@ -7,6 +6,8 @@ import connectdB from './config/mongoDB.js'
 import authRouter from './routes/authRouter.js'
 import productRouter from './routes/productRouter.js'
 import uploadRouter from './routes/uploadRouter.js';
+import userRouter from './routes/userRouter.js';
+import cartRouter from './routes/cartRouter.js';
 
 // App Config
 const app = express()
@@ -19,14 +20,12 @@ connectdB()
 app.use(cors())
 
 // api endpoints
-
 app.use(express.json()); // For parsing application/json
 app.use('/api/auth', authRouter)
 app.use('/api/products', productRouter)
-
-
-// Upload route (handled in uploadRouter)
-app.use('/api', uploadRouter);
+app.use('/api/users', userRouter)
+app.use('/api/cart', cartRouter);
+app.use('/api', uploadRouter); // Upload route (handled in uploadRouter)
 
 app.get('/', (req,res)=>{
     res.send("Welcome to EcoCraft E-Commerce Backend!")

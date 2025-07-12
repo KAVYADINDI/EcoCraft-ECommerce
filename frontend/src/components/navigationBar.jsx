@@ -15,39 +15,55 @@ const categories = [
 
 const SESSION_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 
-const NavigationBar = ({ role = 'user' }) => {
+const NavigationBar = ({ role = 'user', onCategorySelect }) => {
   const [selectedCategory, setSelectedCategory] = useState(categories[0]);
   const [search, setSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const timeoutRef = useRef(null);
-  // Get user name from sessionStorage
-  const userName = sessionStorage.getItem('userName');
+  // Get user info from localStorage (if needed, parse from JWT or store separately)
+  // Example: decode JWT to get user info, or store userName/role in localStorage after login
+  let userName = '';
+  let roleFromStorage = role;
+  const token = localStorage.getItem('token');
+  if (token) {
+    // Optionally decode JWT to get user info (if you want to display userName)
+    // For now, just use role prop
+    // You can use a library like jwt-decode if needed
+  }
 
   // Save session data on login (simulate user data fetch)
   useEffect(() => {
-    if (role === 'artist') {
-      // Fetch artist's products and orders (pseudo-code)
-      // api.get(`/artist/products`).then(res => sessionStorage.setItem('artistProducts', JSON.stringify(res.data)))
-      // api.get(`/artist/orders`).then(res => sessionStorage.setItem('artistOrders', JSON.stringify(res.data)))
-    } else if (role === 'user') {
-      // api.get(`/customer/orderHistory`).then(res => sessionStorage.setItem('orderHistory', JSON.stringify(res.data)))
-      // api.get(`/customer/favourites`).then(res => sessionStorage.setItem('favourites', JSON.stringify(res.data)))
-      // api.get(`/cart`).then(res => sessionStorage.setItem('cart', JSON.stringify(res.data)))
-    }
-    sessionStorage.setItem('isLoggedIn', 'true');
     resetSessionTimeout();
     window.addEventListener('mousemove', resetSessionTimeout);
     window.addEventListener('keydown', resetSessionTimeout);
     window.addEventListener('click', resetSessionTimeout);
+    // Sign out on window/tab close or reload
+    window.addEventListener('beforeunload', handleSignOutOnUnload);
+    // Sign out on connection lost
+    window.addEventListener('offline', handleSignOutOnOffline);
     return () => {
       clearTimeout(timeoutRef.current);
       window.removeEventListener('mousemove', resetSessionTimeout);
       window.removeEventListener('keydown', resetSessionTimeout);
       window.removeEventListener('click', resetSessionTimeout);
+      window.removeEventListener('beforeunload', handleSignOutOnUnload);
+      window.removeEventListener('offline', handleSignOutOnOffline);
     };
     // eslint-disable-next-line
   }, []);
+
+  // Sign out on window/tab close or reload
+  const handleSignOutOnUnload = (e) => {
+    // Only remove token if explicitly signed out
+    if (localStorage.getItem('explicitSignOut')) {
+      localStorage.removeItem('token');
+    }
+  };
+
+  const handleSignOutOnOffline = () => {
+    alert('Connection lost. Please check your internet.');
+  };
 
   const resetSessionTimeout = () => {
     clearTimeout(timeoutRef.current);
@@ -57,7 +73,7 @@ const NavigationBar = ({ role = 'user' }) => {
   };
 
   const handleSignOut = (auto = false) => {
-    sessionStorage.clear();
+    localStorage.removeItem('token');
     if (auto) {
       alert('You have been signed out due to inactivity.');
     }
@@ -67,11 +83,22 @@ const NavigationBar = ({ role = 'user' }) => {
   const handleCategorySelect = (cat) => {
     setSelectedCategory(cat);
     setDropdownOpen(false);
+    if (onCategorySelect) {
+      onCategorySelect(cat); // Pass selected category to parent component
+    }
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
     // Implement search logic or navigation here
+  };
+
+  const handleShopClick = () => {
+    if (role === 'artist') {
+      navigate('/artist/studio');
+    } else {
+      navigate('/shop');
+    }
   };
 
   return (

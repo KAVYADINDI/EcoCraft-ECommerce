@@ -100,6 +100,11 @@ const loginUser = async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials.' });
         }
 
+        // For artists, only allow login if status is 'approved'
+        if (user.role === 'artist' && user.status !== 'approved') {
+            return res.status(403).json({ message: `Your account status is '${user.status.replace(/_/g, ' ')}'. Only approved artists can log in.` });
+        }
+
         // 4. Generate JWT token
         const token = generateToken(user._id, user.role);
 

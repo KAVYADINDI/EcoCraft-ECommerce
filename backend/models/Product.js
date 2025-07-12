@@ -11,14 +11,20 @@ const productSchema = new mongoose.Schema({
   price: { type: Number, required: true },
   
   // Detailed Information
-  materials: String,
+  category: {
+    type: String,
+    enum: ['All Categories', 'Wall Art', 'Home Decor', 'Wearable Art', 'Stationery', 'Utility Crafts'],
+    required: true
+  },
+  materials: [{ type: String }], // Change materials to a list of strings
   dimensions: String,
   careInstructions: String,
   certified: { type: Boolean, default: false },
   
-  // Logistics
-  shippingInfo: String,
-  returnPolicy: String,
+  returnPolicy: {
+    type: String,
+    default: 'We do not accept returns, but you can cancel your order before it ships.'
+  },
 
   // Visuals
   images: [{ type: String }], // Store image URLs or file references

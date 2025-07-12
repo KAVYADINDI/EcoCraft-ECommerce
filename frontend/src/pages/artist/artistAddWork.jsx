@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 const initialState = {
@@ -12,7 +11,10 @@ const initialState = {
   images: [],
   tags: '',
   quantityAvailable: 1,
+  category: '',
 };
+
+const categories = ['select Category','Wall Art', 'Home Decor', 'Wearable Art', 'Stationery', 'Utility Crafts'];
 
 const ArtistAddWork = ({ onSubmit, initialData }) => {
   const [form, setForm] = useState(initialData || initialState);
@@ -38,10 +40,9 @@ const ArtistAddWork = ({ onSubmit, initialData }) => {
     const formData = new FormData();
     Object.entries(form).forEach(([key, value]) => {
       if (key === 'images' && value && value.length > 0) {
-        value.forEach((file) => {
-          formData.append('images', file);
-        });
-      } else {
+        value.forEach((file) => formData.append('images', file));
+      }
+      else {
         formData.append(key, value);
       }
     });
@@ -54,7 +55,7 @@ const ArtistAddWork = ({ onSubmit, initialData }) => {
       <input name="title" value={form.title} onChange={handleChange} placeholder="Title" className="w-full border p-2 rounded" required />
       <textarea name="description" value={form.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded" />
       <input name="price" value={form.price} onChange={handleChange} placeholder="Price" type="number" className="w-full border p-2 rounded" required />
-      <input name="materials" value={form.materials} onChange={handleChange} placeholder="Materials" className="w-full border p-2 rounded" />
+      <input name="materials" value={form.materials} onChange={handleChange} placeholder="Materials (comma separated)" className="w-full border p-2 rounded" />
       <input name="dimensions" value={form.dimensions} onChange={handleChange} placeholder="Dimensions" className="w-full border p-2 rounded" />
       <input name="careInstructions" value={form.careInstructions} onChange={handleChange} placeholder="Care Instructions" className="w-full border p-2 rounded" />
       <label className="flex items-center gap-2">
@@ -63,6 +64,13 @@ const ArtistAddWork = ({ onSubmit, initialData }) => {
       <input name="images" type="file" multiple onChange={handleImageChange} className="w-full" />
       <input name="tags" value={form.tags} onChange={handleChange} placeholder="Tags (comma separated)" className="w-full border p-2 rounded" />
       <input name="quantityAvailable" value={form.quantityAvailable} onChange={handleChange} placeholder="Quantity" type="number" className="w-full border p-2 rounded" />
+      <select name="category" value={form.category} onChange={handleChange} className="w-full border p-2 rounded">
+        {categories.map((category) => (
+          <option key={category} value={category}>
+            {category}
+          </option>
+        ))}
+      </select>
       <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">{initialData ? 'Update' : 'Add'}</button>
     </form>
   );
