@@ -1,16 +1,11 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api', // Proxy to backend
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: '/api',
 });
 
-
-// Attach token to every request if present
 api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token'); // or sessionStorage
+  const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -18,3 +13,4 @@ api.interceptors.request.use(config => {
 });
 
 export default api;
+

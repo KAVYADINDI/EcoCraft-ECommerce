@@ -10,6 +10,8 @@ const ArtistUpdateWork = () => {
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [error, setError] = useState('');
+  const [commissionRate, setCommissionRate] = useState(0);
+  const [listingPrice, setListingPrice] = useState('');
   const artistID = sessionStorage.getItem('userId') || localStorage.getItem('userId');
 
   useEffect(() => {
@@ -30,6 +32,29 @@ const ArtistUpdateWork = () => {
     fetchProduct();
   }, [id, artistID]);
 
+  useEffect(() => {
+    const fetchCommissionRate = async () => {
+      try {
+        const res = await api.get(`/users/${artistID}`);
+        setCommissionRate(res.data.commissionRate || 0);
+      } catch (err) {
+        console.error('Failed to fetch commission rate:', err);
+      }
+    };
+
+    if (artistID) fetchCommissionRate();
+  }, [artistID]);
+
+  useEffect(() => {
+    if (product?.price) {
+      setListingPrice(calculateListingPrice(product.price, commissionRate));
+    }
+  }, [product?.price, commissionRate]);
+
+  const calculateListingPrice = (price, commissionRate) => {
+    if (!price || !commissionRate) return '';
+    return (price / (1 - commissionRate / 100)).toFixed(2);
+  };
 
   const handleUpdate = async (formData) => {
     try {
@@ -70,7 +95,10 @@ const ArtistUpdateWork = () => {
         <h2 className="text-2xl font-bold mb-4">Update Artwork</h2>
         {error && <div className="text-red-600 mb-4">{error}</div>}
         {product && (
-          <ArtistAddWork onSubmit={handleUpdate} initialData={product} />
+          <>
+            <p>Listing Price: {listingPrice ? `$${listingPrice}` : 'N/A'}</p>
+            <ArtistAddWork onSubmit={handleUpdate} initialData={product} />
+          </>
         )}
       </div>
     </div>

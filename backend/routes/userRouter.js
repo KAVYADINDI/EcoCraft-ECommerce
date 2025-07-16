@@ -1,6 +1,7 @@
 import express from 'express';
 import User from '../models/User.js';
 import { authenticateJWT, isAdmin } from '../middleware/auth.js';
+import { updateCommissionRate } from '../controllers/adminController.js';
 
 const router = express.Router();
 
@@ -45,6 +46,26 @@ router.patch('/artist/:id/status', authenticateJWT, isAdmin, async (req, res) =>
     res.json({ message: 'Status updated.', user });
   } catch (err) {
     res.status(500).json({ message: 'Failed to update status.' });
+  }
+});
+
+// Route to update commission rate
+router.patch('/update-commission-rate', updateCommissionRate);
+
+// Get user details by userId
+router.get('/:userId', authenticateJWT, async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findById(userId).select('name email role'); // Adjust fields as needed
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+    res.json(user);
+    console.log('Fetched user details:', user);
+  } catch (err) {
+    console.error('Error fetching user details:', err);
+    res.status(500).json({ message: 'Failed to fetch user details.' });
   }
 });
 

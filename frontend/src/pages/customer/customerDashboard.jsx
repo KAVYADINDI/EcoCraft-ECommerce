@@ -10,8 +10,12 @@ const CustomerDashboard = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await api.get('/products');
-        setProducts(res.data);
+        const res = await api.get('/products'); // Correct endpoint
+        const productsWithListingPrice = res.data.map(product => ({
+          ...product,
+          price: product.listingPrice || product.price, // Use listingPrice if available
+        }));
+        setProducts(productsWithListingPrice);
       } catch (err) {
         console.error('Failed to fetch products:', err);
       }
@@ -19,25 +23,33 @@ const CustomerDashboard = () => {
     fetchProducts();
   }, []);
 
-  const filteredProducts = selectedCategory === 'All Categories'
-    ? products
-    : products.filter(product => product.category === selectedCategory);
+  const filteredProducts =
+    selectedCategory === 'All Categories'
+      ? products
+      : products.filter(product => product.category === selectedCategory);
 
-  const userID = localStorage.getItem('userId');
+  const userID = localStorage.getItem('userId') || 'defaultUserId'; // Fallback if userId is not found
   console.log('CustomerDashboard: Retrieved userID from localStorage:', userID);
 
   const addToCart = (productID) => {
+    if (!userID) {
+      alert('User ID not found. Please log in.');
+      return;
+    }
     console.log('CustomerDashboard: Adding to cart with data:', { productID, quantity: 1, buyerID: userID });
-    api.post('/cart', { productID, quantity: 1, buyerID: userID })
+    api.post('/cart', { productID, quantity: 1, buyerID: userID }) // Ensure correct endpoint
       .then(() => alert('Product added to cart successfully!'))
-      .catch(err => alert('Failed to add product to cart.'));
+      .catch(err => {
+        console.error('Failed to add product to cart:', err);
+        alert('Failed to add product to cart.');
+      });
   };
 
   return (
     <div>
       <NavigationBar role="user" onCategorySelect={setSelectedCategory} />
       <div style={{ padding: '2rem' }}>
-          <div>
+        <div>
           <h3 style={{ fontWeight: 'bold', fontSize: '1.5rem', marginBottom: '1rem', marginTop: '1rem' }}>Featured Products</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
             {filteredProducts.map(product => (
@@ -46,7 +58,7 @@ const CustomerDashboard = () => {
                   <img src={product.images[0]} alt={product.title} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px' }} />
                 )}
                 <h4>{product.title}</h4>
-                <p><strong>Price:</strong> ${product.price}</p>
+                <p><strong>Price:</strong> ${product.listingPrice}</p>
                 <div style={{ display: 'flex', alignItems: 'center', marginTop: '1rem' }}>
                   <button
                     onClick={() => addToCart(product._id)}
@@ -71,7 +83,7 @@ const CustomerDashboard = () => {
                     <img src={product.images[0]} alt={product.title} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px' }} />
                   )}
                   <h4>{product.title}</h4>
-                  <p><strong>Price:</strong> ${product.price}</p>
+                  <p><strong>Price:</strong> ${product.listingPrice}</p>
                   <div style={{ display: 'flex', alignItems: 'center', marginTop: '1rem' }}>
                     <button
                       onClick={() => addToCart(product._id)}

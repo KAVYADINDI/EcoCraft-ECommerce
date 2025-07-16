@@ -2,10 +2,11 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-  userID: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, enum: ['user', 'artist', 'admin'], default: 'user' },
   passwordHash: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'artist', 'customer'], required: true },
   passwordHistory: [{ type: String }], // stores previous password hashes
 
   // For customers: interests (comma-separated string or array of tags/categories)
@@ -14,7 +15,7 @@ const userSchema = new mongoose.Schema({
   // Favourites: Array of Product references (products they like)
   favourites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
 
-  // For artists: origin story
+  // For artists:
   originStory: { type: String },
 
   // status field for admin panel
@@ -25,6 +26,8 @@ const userSchema = new mongoose.Schema({
       return this.role === 'artist' ? 'request_received' : undefined;
     }
   },
+
+  commissionRate: { type: Number, default: 0 },
 
   // Personal Information (for both artists and customers)
   personalInfo: {

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaBars, FaUserCircle, FaShoppingCart, FaStore, FaEnvelopeOpenText } from 'react-icons/fa';
 import leafLogo from '/leaf.svg';
 import { useNavigate } from 'react-router-dom';
+import api from '../api';  
 
 const categories = [
   'All Categories',
@@ -21,16 +22,47 @@ const NavigationBar = ({ role = 'user', onCategorySelect }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const timeoutRef = useRef(null);
-  // Get user info from localStorage (if needed, parse from JWT or store separately)
-  // Example: decode JWT to get user info, or store userName/role in localStorage after login
-  let userName = '';
+  const [userName, setUserName] = useState(''); 
+  const [cartCount, setCartCount] = useState(0);
+
   let roleFromStorage = role;
-  const token = localStorage.getItem('token');
-  if (token) {
-    // Optionally decode JWT to get user info (if you want to display userName)
-    // For now, just use role prop
-    // You can use a library like jwt-decode if needed
+
+  const userId = localStorage.getItem('userId');  
+  useEffect(() => {
+  if (userId) {
+    // Fetch user details using userId
+    const fetchUserName = async () => {
+      try {
+        const res = await api.get(`/users/${userId}`); 
+        setUserName(res.data.email || ''); 
+      } catch (err) {
+        console.error('Failed to fetch user details:', err);
+        setUserName(''); // Reset userName on error
+      }
+    };
+    fetchUserName();
+  } else {
+    setUserName(''); 
   }
+}, [userId]);
+
+  useEffect(() => {
+    const fetchCartCount = async () => {
+      try {
+        const res = await api.get(`/cart?userId=${userId}`); // Use query parameter to fetch cart items
+        const items = res.data.items || []; // Ensure `items` is an array
+        const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0); // Calculate total quantity
+        setCartCount(totalQuantity); // Set the total quantity as the cart count
+      } catch (err) {
+        console.error('Failed to fetch cart count:', err);
+        setCartCount(0); // Reset cart count on error
+      }
+    };
+
+    if (userId) {
+      fetchCartCount(); // Fetch cart count initially
+    }
+  }, [userId]);
 
   // Save session data on login (simulate user data fetch)
   useEffect(() => {
@@ -73,11 +105,11 @@ const NavigationBar = ({ role = 'user', onCategorySelect }) => {
   };
 
   const handleSignOut = (auto = false) => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('token'); // Correctly remove the token
     if (auto) {
-      alert('You have been signed out due to inactivity.');
+      alert('You have been signed out due to inactivity.'); // Correctly display the alert
     }
-    window.location.href = '/login';
+    window.location.href = '/login'; // Redirect to the login page
   };
 
   const handleCategorySelect = (cat) => {
@@ -166,15 +198,25 @@ const NavigationBar = ({ role = 'user', onCategorySelect }) => {
         </button>
         {/* Cart for user only */}
         {role === 'user' && (
-          <button
-            onClick={() => navigate('/cart')}
-            className="bg-none border-none cursor-pointer"
-            aria-label="Cart"
-            title="Cart (View Cart)"
-            style={{ background: 'none', border: 'none' }}
-          >
-            <FaShoppingCart size={28} color="green" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => navigate('/cart')}
+              className="bg-none border-none cursor-pointer"
+              aria-label="Cart"
+              title="Cart (View Cart)"
+              style={{ background: 'none', border: 'none' }}
+            >
+              <FaShoppingCart size={28} color="green" />
+            </button>
+            {cartCount > 0 && (
+              <span
+                className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
+                style={{ transform: 'translate(50%, -50%)' }}
+              >
+                {cartCount}
+              </span>
+            )}
+          </div>
         )}
         {/* Shop icon for artist with dropdown */}
         {role === 'artist' && (
@@ -213,7 +255,7 @@ const NavigationBar = ({ role = 'user', onCategorySelect }) => {
         <ul className="absolute right-8 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[180px] z-50 list-none p-0" style={{ fontFamily: 'inherit', fontSize: '1.08rem', top: '72px' }}>
           {role === 'user' && <>
             <li className="px-5 py-3 cursor-pointer text-green-700" onClick={() => { setDropdownOpen(false); navigate('/customer/favourites'); }}>Favourites</li>
-            <li className="px-5 py-3 cursor-pointer text-green-700" onClick={() => { setDropdownOpen(false); navigate('/customer/orderHistory'); }}>Orders</li>
+            <li className="px-5 py-3 cursor-pointer text-green-700" onClick={() => { setDropdownOpen(false); navigate('/customer/orders'); }}>Orders</li>
           </>}
           <li className="px-5 py-3 cursor-pointer text-green-700" onClick={() => { setDropdownOpen(false); navigate(role === 'artist' ? '/artist/account' : '/customer/userAccount'); }}>Account</li>
           <li className="px-5 py-3 cursor-pointer text-red-600" onClick={() => { setDropdownOpen(false); handleSignOut(false); }}>Sign Out</li>

@@ -13,6 +13,7 @@ import ArtistUpdateWork from './pages/artist/artistUpdateWork';
 import CustomerDashboard from './pages/customer/customerDashboard';
 import AdminDashboard from './pages/admin/adminDashboard';
 import UserAccount from './pages/customer/userAccount';
+import CustomerOrders from './pages/customer/customerOrders';
 
 const App = () => {
   return (
@@ -31,6 +32,7 @@ const App = () => {
         <Route path="/customer/dashboard" element={<CustomerDashboard/>} />
         <Route path="/admin/dashboard" element={<AdminDashboard/>} />
         <Route path="/customer/userAccount" element={<UserAccount/>} />
+        <Route path="/customer/orders" element={<CustomerOrders />} />
       </Routes>
     </Router>
   );

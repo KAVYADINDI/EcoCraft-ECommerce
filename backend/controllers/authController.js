@@ -1,13 +1,11 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-// import crypto from 'crypto'; // Node.js built-in module for generating random bytes
-import User from '../models/User.js'; // Adjust path as per your file structure, assuming models/User.js
+import User from '../models/User.js';
 
-// --- Helper function to generate JWT token ---
 const generateToken = (id, role) => {
-    return jwt.sign({ id, role }, process.env.JWT_SECRET, {
-        expiresIn: '1d', // Token expires in 1 day
-    });
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
+    expiresIn: '1d',
+  });
 };
 
 // Register a new user (admin, artist, customer)- POST /api/auth/register - Public
@@ -80,49 +78,38 @@ const registerUser = async (req, res) => {
 
 // Authenticate a user & get token - POST /api/auth/login
 const loginUser = async (req, res) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    // Basic Validation
-    if (!email || !password) {
-        return res.status(400).json({ message: 'Please enter email and password.' });
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Please enter email and password.' });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
     }
 
-    try {
-        // Check if user exists
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found.' });
-        }
-
-        // Compare passwords
-        const isMatch = await bcrypt.compare(password, user.passwordHash);
-        if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid credentials.' });
-        }
-
-        // For artists, only allow login if status is 'approved'
-        if (user.role === 'artist' && user.status !== 'approved') {
-            return res.status(403).json({ message: `Your account status is '${user.status.replace(/_/g, ' ')}'. Only approved artists can log in.` });
-        }
-
-        // 4. Generate JWT token
-        const token = generateToken(user._id, user.role);
-
-        // 5. Send response
-        res.status(200).json({
-            message: 'Login successful',
-            user: {
-                _id: user._id,
-                userID: user.userID,
-                email: user.email,
-                role: user.role,
-            },
-            token,
-        });
-    } catch (error) {
-        console.error('Error during user login:', error.message, error.stack, error);
-        res.status(500).json({ message: 'Server error during login.' });
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials.' });
     }
+
+    const token = generateToken(user._id, user.role);
+    res.status(200).json({
+      message: 'Login successful',
+      user: {
+        _id: user._id,
+        userID: user.userID,
+        email: user.email,
+        role: user.role,
+      },
+      token,
+    });
+  } catch (error) {
+    console.error('Error during user login:', error.message);
+    res.status(500).json({ message: 'Server error during login.' });
+  }
 };
 
 

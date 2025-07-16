@@ -13,22 +13,25 @@ import cartRouter from './routes/cartRouter.js';
 const app = express()
 const port = process.env.PORT || 4000
 
-//connect to dB
+// Connect to dB
 connectdB()
 
-// middlewares
+// Middlewares
 app.use(cors())
-
-// api endpoints
 app.use(express.json()); // For parsing application/json
+
+// API Endpoints
 app.use('/api/auth', authRouter)
 app.use('/api/products', productRouter)
 app.use('/api/users', userRouter)
 app.use('/api/cart', cartRouter);
 app.use('/api', uploadRouter); // Upload route (handled in uploadRouter)
 
-app.get('/', (req,res)=>{
+app.get('/', (req, res) => {
     res.send("Welcome to EcoCraft E-Commerce Backend!")
 })
 
-app.listen(port, () => console.log('Server is running on PORT : ' + port))
+// Start the server
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});

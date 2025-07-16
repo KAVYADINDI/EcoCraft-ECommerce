@@ -11,6 +11,7 @@ const AdminPanel = () => {
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [commissionRate, setCommissionRate] = useState({});
 
   useEffect(() => {
     fetchArtists();
@@ -39,6 +40,24 @@ const AdminPanel = () => {
       );
     } catch (err) {
       setError('Failed to update status.');
+    }
+  };
+
+  const handleCommissionRateChange = (id, value) => {
+    setCommissionRate(prev => ({ ...prev, [id]: value }));
+  };
+
+  const updateCommissionRate = async (id) => {
+    try {
+      const rate = commissionRate[id];
+      if (!rate) {
+        alert('Please enter a commission rate before submitting.');
+        return;
+      }
+      await api.patch('/users/update-commission-rate', { userId: id, commissionRate: rate });
+      alert('Commission rate updated successfully.');
+    } catch (err) {
+      alert('Failed to update commission rate.');
     }
   };
 
@@ -205,6 +224,36 @@ const AdminPanel = () => {
                             }}
                           >
                             Reject
+                          </button>
+                          <input
+                            type="number"
+                            placeholder="Commission Rate (%)"
+                            value={commissionRate[artist._id] || ''}
+                            onChange={(e) => handleCommissionRateChange(artist._id, e.target.value)}
+                            style={{
+                              marginLeft: 12,
+                              padding: '6px 12px',
+                              borderRadius: 8,
+                              border: '1px solid #e2e8f0',
+                              fontSize: 14,
+                            }}
+                          />
+                          <button
+                            onClick={() => updateCommissionRate(artist._id)}
+                            style={{
+                              background: 'green',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: 8,
+                              padding: '6px 18px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              fontSize: 14,
+                              marginLeft: 12,
+                              transition: 'background 0.2s',
+                            }}
+                          >
+                            Submit Rate
                           </button>
                         </>
                       )}

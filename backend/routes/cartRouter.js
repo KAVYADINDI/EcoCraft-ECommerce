@@ -1,5 +1,5 @@
 import express from 'express';
-import CartItem from '../models/CartItem.js';
+import Cart from '../models/Cart.js'; // Updated Cart model
 import { body, validationResult } from 'express-validator';
 
 const router = express.Router();
@@ -19,17 +19,22 @@ router.post(
     }
 
     const { productID, quantity, buyerID } = req.body;
-    console.log('POST /cart called with:', { productID, quantity, buyerID });
 
     try {
-      const existingCartItem = await CartItem.findOne({ buyerID, productID });
-      if (existingCartItem) {
-        existingCartItem.quantity += quantity;
-        await existingCartItem.save();
-      } else {
-        await CartItem.create({ buyerID, productID, quantity });
+      let cart = await Cart.findOne({ buyerID });
+      if (!cart) {
+        cart = new Cart({ buyerID, items: [] });
       }
-      res.status(200).json({ message: 'Product added to cart successfully.' });
+
+      const existingItem = cart.items.find(item => item.productID.toString() === productID);
+      if (existingItem) {
+        existingItem.quantity += quantity;
+      } else {
+        cart.items.push({ productID, quantity });
+      }
+
+      await cart.save();
+      res.status(200).json({ message: 'Product added to cart successfully.', cart });
     } catch (err) {
       console.error('POST /cart error:', err.message);
       res.status(500).json({ message: 'Failed to add product to cart.', error: err.message });
@@ -45,11 +50,16 @@ router.get('/', async (req, res) => {
   }
 
   try {
-    const cartItems = await CartItem.find({ buyerID: userId }).populate('productID');
-    res.status(200).json(cartItems);
+    let cart = await Cart.findOne({ buyerID: userId }).populate('items.productID');
+    if (!cart) {
+      // Create a new cart if it does not exist
+      cart = new Cart({ buyerID: userId, items: [] });
+      await cart.save();
+    }
+    res.status(200).json(cart);
   } catch (err) {
     console.error('GET /cart error:', err.message);
-    res.status(500).json({ message: 'Failed to fetch cart items.', error: err.message });
+    res.status(500).json({ message: 'Failed to fetch cart.', error: err.message });
   }
 });
 
@@ -63,18 +73,40 @@ router.patch('/:itemId', async (req, res) => {
   }
 
   try {
-    const cartItem = await CartItem.findById(itemId);
-    if (!cartItem) {
-      return res.status(404).json({ message: 'Cart item not found' });
+    const cart = await Cart.findOne({ 'items._id': itemId });
+    if (!cart) {
+      return res.status(404).json({ message: 'Cart item not found.' });
     }
 
-    cartItem.quantity = quantity;
-    await cartItem.save();
+    const item = cart.items.id(itemId);
+    item.quantity = quantity;
+    await cart.save();
 
-    res.status(200).json({ message: 'Cart item updated successfully', cartItem });
+    res.status(200).json({ message: 'Cart item updated successfully.', cart });
   } catch (err) {
     console.error('PATCH /cart/:itemId error:', err.message);
     res.status(500).json({ message: 'Failed to update cart item.', error: err.message });
+  }
+});
+
+// Delete cart item
+router.delete('/:itemId', async (req, res) => {
+  const { itemId } = req.params;
+
+  try {
+    const cart = await Cart.findOne({ 'items._id': itemId });
+    if (!cart) {
+      return res.status(404).json({ message: 'Cart item not found.' });
+    }
+
+    // Use Mongoose's `pull` method to remove the item from the array
+    cart.items = cart.items.filter(item => item._id.toString() !== itemId);
+    await cart.save();
+
+    res.status(200).json({ message: 'Cart item deleted successfully.', cart });
+  } catch (err) {
+    console.error('DELETE /cart/:itemId error:', err.message);
+    res.status(500).json({ message: 'Failed to delete cart item.', error: err.message });
   }
 });
 

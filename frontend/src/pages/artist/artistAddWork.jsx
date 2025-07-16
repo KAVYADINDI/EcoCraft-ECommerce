@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const initialState = {
   title: '',
@@ -16,8 +16,32 @@ const initialState = {
 
 const categories = ['select Category','Wall Art', 'Home Decor', 'Wearable Art', 'Stationery', 'Utility Crafts'];
 
+const calculateListingPrice = (price, commissionRate) => {
+  if (!price || !commissionRate) return '';
+  return (price / (1 - commissionRate / 100)).toFixed(2);
+};
+
 const ArtistAddWork = ({ onSubmit, initialData }) => {
   const [form, setForm] = useState(initialData || initialState);
+  const [commissionRate, setCommissionRate] = useState(0);
+  const [listingPrice, setListingPrice] = useState('');
+
+  useEffect(() => {
+    const fetchCommissionRate = async () => {
+      try {
+        const res = await api.get(`/users/${form.artistID}`);
+        setCommissionRate(res.data.commissionRate || 0);
+      } catch (err) {
+        console.error('Failed to fetch commission rate:', err);
+      }
+    };
+
+    if (form.artistID) fetchCommissionRate();
+  }, [form.artistID]);
+
+  useEffect(() => {
+    setListingPrice(calculateListingPrice(form.price, commissionRate));
+  }, [form.price, commissionRate]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -55,6 +79,7 @@ const ArtistAddWork = ({ onSubmit, initialData }) => {
       <input name="title" value={form.title} onChange={handleChange} placeholder="Title" className="w-full border p-2 rounded" required />
       <textarea name="description" value={form.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded" />
       <input name="price" value={form.price} onChange={handleChange} placeholder="Price" type="number" className="w-full border p-2 rounded" required />
+      <p>Listing Price: {listingPrice ? `$${listingPrice}` : 'N/A'}</p>
       <input name="materials" value={form.materials} onChange={handleChange} placeholder="Materials (comma separated)" className="w-full border p-2 rounded" />
       <input name="dimensions" value={form.dimensions} onChange={handleChange} placeholder="Dimensions" className="w-full border p-2 rounded" />
       <input name="careInstructions" value={form.careInstructions} onChange={handleChange} placeholder="Care Instructions" className="w-full border p-2 rounded" />
