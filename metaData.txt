@@ -1,0 +1,31 @@
+npm install
+
+ADMIN:
+
+kavya@gmail.com
+Kavya123
+
+----
+CUSTOMER:
+
+varsha@gmail.com
+Varsha123
+
+babith@gmail.com
+Babith123
+
+-----
+registor ARTISTS:
+
+The ReMade
+remade@gmail.com
+Remade123
+
+Reclaimed Rhapsody
+rhapsody@gmail.com
+Rhapsody123
+
+Veridian Visions
+vv@gmail.com
+Visions123
+
