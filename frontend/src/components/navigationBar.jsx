@@ -15,21 +15,29 @@ const categories = [
 const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 const NavigationBar = ({ onCategorySelect }) => {
-  const [role, setRole] = useState('customer'); // default role
   const [selectedCategory, setSelectedCategory] = useState(categories[0]);
   const [search, setSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [storedRole, setStoredRole] = useState(localStorage.getItem('role')); // synced role
   const navigate = useNavigate();
   const location = useLocation();
   const timeoutRef = useRef(null);
 
-  // Load role from sessionStorage when component mounts
+  // Keep storedRole updated when route changes (e.g. after login)
   useEffect(() => {
-    const storedRole = sessionStorage.getItem('role');
-    if (storedRole) setRole(storedRole);
-  }, []);
+    setStoredRole(localStorage.getItem('role'));
+  }, [location.pathname]);
 
-  // Session timeout handlers
+  // Keep storedRole updated when localStorage changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const currentRole = localStorage.getItem('role');
+      if (currentRole !== storedRole) setStoredRole(currentRole);
+    }, 500);
+    return () => clearInterval(interval);
+  }, [storedRole]);
+
+  // Session timeout handling
   useEffect(() => {
     resetSessionTimeout();
     window.addEventListener('mousemove', resetSessionTimeout);
@@ -37,6 +45,7 @@ const NavigationBar = ({ onCategorySelect }) => {
     window.addEventListener('click', resetSessionTimeout);
     window.addEventListener('beforeunload', handleSignOutOnUnload);
     window.addEventListener('offline', handleSignOutOnOffline);
+
     return () => {
       clearTimeout(timeoutRef.current);
       window.removeEventListener('mousemove', resetSessionTimeout);
@@ -46,6 +55,13 @@ const NavigationBar = ({ onCategorySelect }) => {
       window.removeEventListener('offline', handleSignOutOnOffline);
     };
   }, []);
+
+  const resetSessionTimeout = () => {
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      handleSignOut(true);
+    }, SESSION_TIMEOUT);
+  };
 
   const handleSignOutOnUnload = () => {
     if (localStorage.getItem('explicitSignOut')) {
@@ -57,45 +73,34 @@ const NavigationBar = ({ onCategorySelect }) => {
     alert('Connection lost. Please check your internet.');
   };
 
-  const resetSessionTimeout = () => {
-    clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      handleSignOut(true);
-    }, SESSION_TIMEOUT);
+  const handleSignOut = (auto = false) => {
+    localStorage.clear();
+    if (auto) alert('You have been signed out due to inactivity.');
+    navigate('/login');
   };
 
-  const handleSignOut = (auto = false) => {
-    localStorage.removeItem('token');
-    if (auto) alert('You have been signed out due to inactivity.');
-    window.location.href = '/login';
+  const handleLogoClick = () => {
+    if (storedRole === 'customer') navigate('/customer/dashboard');
+    else if (storedRole === 'artist') navigate('/artist/dashboard');
+    else if (storedRole === 'admin') navigate('/admin/dashboard');
+    else navigate('/login');
   };
 
   const handleCategorySelect = (cat) => {
     setSelectedCategory(cat);
     setDropdownOpen(false);
     if (onCategorySelect) onCategorySelect(cat);
+    navigate('/customer/dashboard');
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
-    // Implement search logic if needed
+    // Implement your search logic here if needed
   };
-
-  const handleLogoClick = () => {
-    if (role === 'customer') navigate('/customer/dashboard');
-    else if (role === 'artist') navigate('/artist/dashboard');
-    else if (role === 'admin') navigate('/admin/dashboard');
-    else navigate('/');
-  };
-
-  // Hide categories & search on certain pages
-  const hideCategoriesAndSearch =
-    location.pathname.includes('customerOrders') ||
-    location.pathname.includes('userAccount') ||
-    location.pathname.includes('cart');
 
   return (
-    <nav className="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+    <nav className="bg-white shadow-md py-4 px-6 flex justify-between items-center relative">
+      {/* EcoCraft logo */}
       <span
         onClick={handleLogoClick}
         className="text-green-700 cursor-pointer flex items-center gap-2"
@@ -111,8 +116,10 @@ const NavigationBar = ({ onCategorySelect }) => {
         EcoCraft
       </span>
 
-      {role === 'customer' && !hideCategoriesAndSearch && (
+      {/* CUSTOMER: always show categories & search */}
+      {storedRole === 'customer' && (
         <>
+          {/* Categories */}
           <button
             onClick={() => setDropdownOpen(dropdownOpen === 'category' ? false : 'category')}
             className="flex items-center text-green-700 font-semibold text-lg bg-none border-none cursor-pointer gap-2"
@@ -138,6 +145,7 @@ const NavigationBar = ({ onCategorySelect }) => {
             </ul>
           )}
 
+          {/* Search */}
           <form onSubmit={handleSearch} className="flex flex-1 justify-center mx-8" style={{ maxWidth: 600 }}>
             <input
               type="text"
@@ -154,7 +162,9 @@ const NavigationBar = ({ onCategorySelect }) => {
         </>
       )}
 
+      {/* Right icons */}
       <div className="flex items-center space-x-6">
+        {/* Account */}
         <button
           onClick={() => setDropdownOpen(dropdownOpen === 'account' ? false : 'account')}
           className="bg-none border-none cursor-pointer"
@@ -165,7 +175,8 @@ const NavigationBar = ({ onCategorySelect }) => {
           <FaUserCircle size={30} color="green" />
         </button>
 
-        {role === 'customer' && (
+        {/* Customer: cart */}
+        {storedRole === 'customer' && (
           <button
             onClick={() => navigate('/cart')}
             className="bg-none border-none cursor-pointer"
@@ -176,7 +187,8 @@ const NavigationBar = ({ onCategorySelect }) => {
           </button>
         )}
 
-        {role === 'artist' && (
+        {/* Artist: shop */}
+        {storedRole === 'artist' && (
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(dropdownOpen === 'shop' ? false : 'shop')}
@@ -195,7 +207,8 @@ const NavigationBar = ({ onCategorySelect }) => {
           </div>
         )}
 
-        {role === 'admin' && (
+        {/* Admin: mail icon */}
+        {storedRole === 'admin' && (
           <button
             onClick={() => navigate('/admin/adminPanel')}
             className="bg-none border-none cursor-pointer"
@@ -207,18 +220,27 @@ const NavigationBar = ({ onCategorySelect }) => {
         )}
       </div>
 
+      {/* Account dropdown */}
       {dropdownOpen === 'account' && (
         <ul className="absolute right-8 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[180px] z-50 list-none p-0" style={{ top: '72px', fontSize: '1.08rem' }}>
-          {role === 'customer' && <>
-            <li className="px-5 py-3 cursor-pointer text-green-700" onClick={() => { setDropdownOpen(false); navigate('/customer/customerOrders'); }}>Orders</li>
-            <li className="px-5 py-3 cursor-pointer text-green-700" onClick={() => { setDropdownOpen(false); navigate('/customer/userAccount'); }}>Account</li>
-          </>}
-          {role === 'artist' && (
+          {/* Customer */}
+          {storedRole === 'customer' && (
+            <>
+              <li className="px-5 py-3 cursor-pointer text-green-700" onClick={() => { setDropdownOpen(false); navigate('/customer/customerOrders'); }}>Orders</li>
+              <li className="px-5 py-3 cursor-pointer text-green-700" onClick={() => { setDropdownOpen(false); navigate('/customer/userAccount'); }}>Account</li>
+            </>
+          )}
+          {/* Artist */}
+          {storedRole === 'artist' && (
             <li className="px-5 py-3 cursor-pointer text-green-700" onClick={() => { setDropdownOpen(false); navigate('/artist/artistAccount'); }}>Account</li>
           )}
-          {role === 'admin' && (
-            <li className="px-5 py-3 cursor-pointer text-green-700" onClick={() => { setDropdownOpen(false); navigate('/admin/dashboard'); }}>Account</li>
+          {/* Admin */}
+          {storedRole === 'admin' && (
+            <>
+              <li className="px-5 py-3 cursor-pointer text-green-700" onClick={() => { setDropdownOpen(false); navigate('/admin/dashboard'); }}>Account</li>
+            </>
           )}
+          {/* Sign out */}
           <li className="px-5 py-3 cursor-pointer text-red-600" onClick={() => { setDropdownOpen(false); handleSignOut(false); }}>Sign Out</li>
         </ul>
       )}
@@ -227,3 +249,4 @@ const NavigationBar = ({ onCategorySelect }) => {
 };
 
 export default NavigationBar;
+
