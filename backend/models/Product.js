@@ -9,7 +9,7 @@ const productSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: String,
   price: { type: Number, required: true },
-  listingPrice: { type: Number, required: false },
+  // listingPrice: { type: Number, required: false },
   
   // Detailed Information
   category: {
@@ -37,6 +37,8 @@ const productSchema = new mongoose.Schema({
   }],
   
   quantityAvailable: { type: Number, default: 0 },
+  commissionRate: { type: Number, default: 0 },
+  listProduct: { type: Boolean, default: false },
 
 }, { timestamps: true });
 

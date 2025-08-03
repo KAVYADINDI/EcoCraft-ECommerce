@@ -37,16 +37,20 @@ const CustomerDashboard = () => {
     fetchProducts();
   }, []);
 
-  const filteredProducts = selectedCategory === 'All Categories'
-    ? products
-    : products.filter(product => product.category === selectedCategory);
+  // const filteredProducts = selectedCategory === 'All Categories'
+  //   ? products
+  //   : products.filter(product => product.category === selectedCategory);
+
+  const filteredProducts = products
+  .filter(product => product.listProduct === true)
+  .filter(product => selectedCategory === 'All Categories' || product.category === selectedCategory);
 
   const userID = localStorage.getItem('id');
   console.log('CustomerDashboard: Retrieved userID from localStorage:', userID);
 
   const addToCart = (productID) => {
     console.log('CustomerDashboard: Adding to cart with data:', { productID, quantity: 1, buyerID: userID });
-    api.post('/cart', { productID, quantity: 1, buyerID: userID, price: filteredProducts.find(p => p._id === productID).price })
+    api.post('/cart', { productID, quantity: 1, customerID: userID, price: filteredProducts.find(p => p._id === productID).price })
       .then(() => alert('Product added to cart successfully!'))
       .catch(err => alert('Failed to add product to cart.'));
   };
@@ -100,7 +104,7 @@ const CustomerDashboard = () => {
                     />
                   )}
                   <h4>{product.title}</h4>
-                  <p><strong>Price:</strong> ${product.listingPrice}</p>
+                  <p><strong>Price:</strong> ${product.price}</p>
                   <div style={{ display: 'flex', alignItems: 'center', marginTop: '1rem' }}>
                     <button
                       onClick={() => addToCart(product._id)}
@@ -130,31 +134,6 @@ const CustomerDashboard = () => {
                 </div>
               );
             })}
-          </div>
-        </div>
-
-        <div>
-          <h3 style={{ fontWeight: 'bold', fontSize: '1.5rem', marginBottom: '1rem', marginTop: '1rem'}}>Bestsellers</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-            {filteredProducts
-              .filter(product => product.averageRating >= 4)
-              .map(product => (
-                <div key={product._id} style={{ border: '1px solid #ccc', padding: '1rem', borderRadius: '8px' }}>
-                  {product.images && product.images.length > 0 && (
-                    <img src={product.images[0]} alt={product.title} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px' }} />
-                  )}
-                  <h4>{product.title}</h4>
-                  <p><strong>Price:</strong> ${product.price}</p>
-                  <div style={{ display: 'flex', alignItems: 'center', marginTop: '1rem' }}>
-                    <button
-                      onClick={() => addToCart(product._id)}
-                      style={{ marginTop: '1rem', padding: '0.5rem 1rem', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                    >
-                      Add to Cart
-                    </button>
-                  </div>
-                </div>
-              ))}
           </div>
         </div>
       </div>

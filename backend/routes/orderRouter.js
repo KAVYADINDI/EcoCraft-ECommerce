@@ -2,9 +2,25 @@ import express from 'express';
 import Order from '../models/Order.js';
 import Cart from '../models/Cart.js';
 import User from '../models/User.js';
+import Product from '../models/Product.js';
 import mongoose from 'mongoose';
+import { authenticateJWT, isAdmin } from '../middleware/auth.js';
+
 
 const router = express.Router();
+
+// GET /api/orders/ - Fetch all orders (admin only)
+router.get('/', authenticateJWT, isAdmin, async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .sort({ createdAt: -1 })
+      .populate('items.productID'); // optional: populate products
+    res.json(orders);
+  } catch (err) {
+    console.error('Error fetching all orders:', err);
+    res.status(500).json({ message: 'Failed to fetch orders.' });
+  }
+});
 
 // Place a new order
 router.post('/', async (req, res) => {
@@ -18,28 +34,47 @@ router.post('/', async (req, res) => {
     if (!user.personalInfo || !user.personalInfo.address || !user.personalInfo.mobile) {
       return res.status(400).json({ message: 'User address and mobile are required' });
     }
+
     const cart = await Cart.findOne({ customerID: userId });
     if (!cart || !cart.items.length) {
       return res.status(400).json({ message: 'Cart is empty' });
     }
-    
+
     console.log('Placing order with items:', cart.items);
+
+    // Load product details to get commissionRate
+    const productIds = cart.items.map(item => item.productID);
+    const products = await Product.find({ _id: { $in: productIds } });
+
+    // Build items array with calculated commission and payout
+    const itemsWithCommission = cart.items.map(item => {
+      const product = products.find(p => p._id.toString() === item.productID.toString());
+      const commissionRate = product?.commissionRate ?? 0;
+      const price = item.price;
+      const quantity = item.quantity;
+      const commissionAmount = price * quantity * (commissionRate / 100);
+      const artistPayout = price * quantity - commissionAmount;
+
+      return {
+        productID: new mongoose.Types.ObjectId(item.productID),
+        quantity,
+        priceAtPurchase: price,
+        commissionAmount,
+        artistPayout
+      };
+    });
 
     const order = await Order.create({
       customerID: userId,
-      // orderDate: new Date(),
-      // shippingStatus: 'Pending',
-      items: cart.items.map(item => ({
-        productID: new mongoose.Types.ObjectId(item.productID),
-        quantity: item.quantity,
-        priceAtPurchase: item.price
-      })),
+      items: itemsWithCommission,
       totalAmountWhilePlacingOrder: cart.totalAmount
     });
-    // Optionally, clear the cart after order
+
+    // Clear the cart
     cart.items = [];
     cart.totalAmount = 0;
     await cart.save();
+
     res.status(201).json({ message: 'Order placed successfully', order });
   } catch (err) {
     console.error('POST /orders error:', err.message);
@@ -138,7 +173,6 @@ router.patch('/:orderId/cancel', async (req, res) => {
 router.get('/artist/:artistId/stats', async (req, res) => {
   const { artistId } = req.params;
   const { from, to } = req.query; // ISO date strings
-  const commissionRate = 10; // example: 10%
 
   try {
     // Build date filter if provided
@@ -149,52 +183,66 @@ router.get('/artist/:artistId/stats', async (req, res) => {
       if (to) dateFilter.createdAt.$lte = new Date(to);
     }
 
-    // Find all orders in the date range with items populated
+    // Find all orders in the date range and populate with artist-specific products
     const orders = await Order.find({
       'items.productID': { $exists: true },
       ...dateFilter
     })
       .populate({
         path: 'items.productID',
-        match: { artistID: artistId },
-        select: 'title artistID price'
+        match: { artistID: artistId }, // Only populate products by the specific artist
+        select: 'title artistID price' // Select only the necessary fields
       });
 
     let totalOrders = 0;
     let totalOrderValue = 0;
-    let totalIncome = 0;
     let cancellations = 0;
     let shipped = 0;
     let pending = 0;
+    let totalPayout = 0; // New variable to track the total payout for shipped orders
     const productSales = {}; // { productTitle: totalQuantity }
 
+    // Loop through each order to gather statistics
     for (const order of orders) {
+      // Filter for items in the current order that belong to the artist
       const artistItems = order.items.filter(item =>
         item.productID && String(item.productID.artistID) === artistId
       );
 
+      // If the order contains no items from this artist, skip to the next order
       if (artistItems.length === 0) continue;
 
+      // Increment total orders and categorize by shipping status
       totalOrders += 1;
-
+      if (order.shippingStatus === 'cancelled') {
+        cancellations += 1;
+      } else if (order.shippingStatus === 'shipped') {
+        shipped += 1;
+        // If the order is shipped, calculate the payout by summing artistPayout from items
+        const orderPayout = artistItems.reduce((sum, item) => sum + item.artistPayout, 0);
+        totalPayout += orderPayout;
+        //  // Calculate the total value of all items in this order belonging to the artist
+        // const orderTotal = artistItems.reduce((sum, item) =>
+        //   sum + item.priceAtPurchase * item.quantity, 0);
+        // totalOrderValue += orderTotal;
+      } else if (order.shippingStatus === 'pending') {
+        pending += 1;
+      }
+      
+      // Calculate the total value of all items in this order belonging to the artist
       const orderTotal = artistItems.reduce((sum, item) =>
         sum + item.priceAtPurchase * item.quantity, 0);
 
       totalOrderValue += orderTotal;
-      totalIncome += orderTotal * (1 - commissionRate / 100);
 
-      if (order.shippingStatus === 'cancelled') cancellations += 1;
-      else if (order.shippingStatus === 'shipped') shipped += 1;
-      else if (order.shippingStatus === 'pending') pending += 1;
-
-      // Count product sales
+      // Count product sales for top products
       for (const item of artistItems) {
         const title = item.productID.title;
         productSales[title] = (productSales[title] || 0) + item.quantity;
       }
     }
 
-    // Convert productSales object to sorted array
+    // Convert productSales object to a sorted array for top products
     const topProducts = Object.entries(productSales)
       .map(([title, quantity]) => ({ title, quantity }))
       .sort((a, b) => b.quantity - a.quantity);
@@ -202,7 +250,7 @@ router.get('/artist/:artistId/stats', async (req, res) => {
     res.json({
       totalOrders,
       totalOrderValue,
-      totalIncome,
+      totalPayout, // Updated to return the new totalPayout variable
       cancellations,
       shipped,
       pending,
@@ -214,6 +262,5 @@ router.get('/artist/:artistId/stats', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch artist stats', error: err.message });
   }
 });
-
 
 export default router;

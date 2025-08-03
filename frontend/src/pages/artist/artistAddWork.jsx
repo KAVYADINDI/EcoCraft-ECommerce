@@ -53,18 +53,48 @@ const ArtistAddWork = ({ onSubmit, initialData }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 bg-white p-4 rounded shadow max-w-xl mx-auto" encType="multipart/form-data">
       <h3 className="text-lg font-bold">{initialData ? 'Update Artwork' : 'Add New Artwork'}</h3>
+  
+      <div className="mb-4">
+      <label className="block font-semibold mb-1">Title</label>
       <input name="title" value={form.title} onChange={handleChange} placeholder="Title" className="w-full border p-2 rounded" required />
+      </div>
+       <div className="mb-4">
+      <label className="block font-semibold mb-1">Description</label>
       <textarea name="description" value={form.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded" />
+       </div>
+       <div className="mb-4">
+      <label className="block font-semibold mb-1">Price</label>
       <input name="price" value={form.price} onChange={handleChange} placeholder="Price" type="number" className="w-full border p-2 rounded" required />
+      </div>
+       <div className="mb-4">
+      <label className="block font-semibold mb-1">Materials</label>
       <input name="materials" value={form.materials} onChange={handleChange} placeholder="Materials (comma separated)" className="w-full border p-2 rounded" />
+       </div>
+       <div className="mb-4">
+      <label className="block font-semibold mb-1">Dimensions</label>
       <input name="dimensions" value={form.dimensions} onChange={handleChange} placeholder="Dimensions" className="w-full border p-2 rounded" />
+       </div>
+       <div className="mb-4">
+      <label className="block font-semibold mb-1">Care Instructions</label>
       <input name="careInstructions" value={form.careInstructions} onChange={handleChange} placeholder="Care Instructions" className="w-full border p-2 rounded" />
+        </div>
       <label className="flex items-center gap-2">
         <input name="certified" type="checkbox" checked={form.certified} onChange={handleChange} /> Certified
       </label>
+       <div className="mb-4">
+      <label className="block font-semibold mb-1">Images</label>
       <input name="images" type="file" multiple onChange={handleImageChange} className="w-full" />
+      </div>
+        <div className="mb-4">
+      <label className="block font-semibold mb-1">Tags</label>
       <input name="tags" value={form.tags} onChange={handleChange} placeholder="Tags (comma separated)" className="w-full border p-2 rounded" />
+      </div>
+       <div className="mb-4">
+      <label className="block font-semibold mb-1">Quantity</label>
       <input name="quantityAvailable" value={form.quantityAvailable} onChange={handleChange} placeholder="Quantity" type="number" className="w-full border p-2 rounded" />
+      </div>
+        <div className="mb-4">
+      <label className="block font-semibold mb-1">Category</label>
       <select name="category" value={form.category} onChange={handleChange} className="w-full border p-2 rounded">
         {categories.map((category) => (
           <option key={category} value={category}>
@@ -72,6 +102,7 @@ const ArtistAddWork = ({ onSubmit, initialData }) => {
           </option>
         ))}
       </select>
+      </div>
       <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">{initialData ? 'Update' : 'Add'}</button>
     </form>
   );

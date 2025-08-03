@@ -8,6 +8,8 @@ const orderSchema = new mongoose.Schema({
     productID: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
     quantity: { type: Number, required: true },
     priceAtPurchase: { type: Number, required: true },
+    commissionAmount: { type: Number, required: true },     
+    artistPayout: { type: Number, required: true }   
   }],
   totalAmountWhilePlacingOrder: { type: Number, required: true },
 }, { timestamps: true });

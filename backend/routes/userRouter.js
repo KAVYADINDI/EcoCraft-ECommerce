@@ -5,6 +5,17 @@ import { updateCommissionRate } from '../controllers/adminController.js';
 
 const router = express.Router();
 
+// GET /api/users/ - Fetch all users (admin only)
+router.get('/', authenticateJWT, isAdmin, async (req, res) => {
+  try {
+    const users = await User.find().select('userID email role status personalInfo'); // adjust fields as needed
+    res.json(users);
+  } catch (err) {
+    console.error('Error fetching all users:', err);
+    res.status(500).json({ message: 'Failed to fetch users.' });
+  }
+});
+
 // Get all artists (for admin panel)
 router.get('/artists', authenticateJWT, isAdmin, async (req, res) => {
   try {
@@ -50,15 +61,15 @@ router.patch('/artist/:id/status', authenticateJWT, isAdmin, async (req, res) =>
   }
 });
 
-// Route to update commission rate
-router.patch('/update-commission-rate', updateCommissionRate);
+// // Route to update commission rate
+// router.patch('/update-commission-rate', updateCommissionRate);
 
 // Get user details by userID
 router.get('/:userID', authenticateJWT, async (req, res) => {
   const { userID } = req.params;
 
   try {
-    const user = await User.findById(userID).select('userID email role personalInfo commissionRate'); // Adjust fields as needed
+    const user = await User.findById(userID).select('userID email role personalInfo'); // Adjust fields as needed
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }

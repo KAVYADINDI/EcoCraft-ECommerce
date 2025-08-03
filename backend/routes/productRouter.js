@@ -1,7 +1,8 @@
 import express from 'express';
 import Product from '../models/Product.js';
 import upload from '../middleware/cloudinaryUpload.js';
-import User from '../models/User.js';
+import { updateCommissionRate } from '../controllers/adminController.js';
+import { authenticateJWT, isAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -16,15 +17,7 @@ router.post('/', upload.array('images', 5), async (req, res) => {
       ? req.body.materials.split(',').map(material => material.trim().toLowerCase())
       : [];
 
-    // Fetch artist's commission rate from DB
-    const artist = await User.findById(req.body.artistID);
-    if (!artist) {
-      return res.status(404).json({ message: 'Artist not found.' });
-    }
-    const commissionRate = artist.commissionRate || 0;
-    const listingPrice = Number((req.body.price / (1 - commissionRate / 100)).toFixed(2));
-
-    const product = await Product.create({ ...req.body, tags, materials, images: imageUrls, listingPrice });
+    const product = await Product.create({ ...req.body, tags, materials, images: imageUrls });
     res.status(201).json(product);
   } catch (err) {
     console.error('POST /api/products error:', err.message, err.stack, err);
@@ -42,27 +35,13 @@ router.put('/:id', upload.array('images', 5), async (req, res) => {
     if (updateData.tags) {
       updateData.tags = Array.isArray(updateData.tags)
         ? updateData.tags.map(tag => tag.trim().toLowerCase())
-        : updateData.tags.split(',').map(tag => tag.trim().toLowerCase()); // Ensure tags are stored as a list
+        : updateData.tags.split(',').map(tag => tag.trim().toLowerCase());
     }
     if (updateData.materials) {
       updateData.materials = Array.isArray(updateData.materials)
         ? updateData.materials.map(material => material.trim().toLowerCase())
-        : updateData.materials.split(',').map(material => material.trim().toLowerCase()); // Ensure materials are stored as a list
+        : updateData.materials.split(',').map(material => material.trim().toLowerCase());
     }
-
-
-    // Fetch artist's commission rate
-    const artist = await User.findById(updateData.artistID);
-    if (!artist) {
-      return res.status(404).json({ message: 'Artist not found.' });
-    }
-
-    const commissionRate = artist.commissionRate || 0;
-    console.log('Commission rate for artistID', updateData.artistID, ':', commissionRate);
-    // updateData.listingPrice = updateData.price / (1 - commissionRate / 100);
-    updateData.listingPrice = Number((updateData.price / (1 - commissionRate / 100)).toFixed(2));
-    console.log('Calculated listing price:', updateData.listingPrice);
-
 
     const updated = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!updated) {
@@ -71,17 +50,18 @@ router.put('/:id', upload.array('images', 5), async (req, res) => {
     res.json({ message: 'Product updated successfully.', product: updated });
   } catch (err) {
     console.error('PUT /api/products/:id error:', err.message, err.stack, err);
-    // If error is not a string, send stringified version
     let msg = err && err.message ? err.message : (typeof err === 'string' ? err : JSON.stringify(err));
     res.status(400).json({ message: msg });
   }
 });
 
-// Get all products for an artist
 router.get('/', async (req, res) => {
-  const { artistID } = req.query;
+  const { artistID, listProduct } = req.query;
+  const filter = {};
+  if (artistID) filter.artistID = artistID;
+  if (listProduct !== undefined) filter.listProduct = listProduct === 'true';
   try {
-    const products = await Product.find(artistID ? { artistID } : {});
+    const products = await Product.find(filter);
     res.json(products);
   } catch (err) {
     console.error('GET /api/products error:', err.message, err.stack, err);
@@ -99,5 +79,8 @@ router.get('/:id', async (req, res) => {
     res.status(404).json({ message: 'Product not found' });
   }
 });
+
+// Update commission rate for product (admin only)
+router.patch('/:id/commission', authenticateJWT, isAdmin, updateCommissionRate);
 
 export default router;

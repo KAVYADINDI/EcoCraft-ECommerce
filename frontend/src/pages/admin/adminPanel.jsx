@@ -11,7 +11,7 @@ const AdminPanel = () => {
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [commissionRate, setCommissionRate] = useState({});
+ // const [commissionRate, setCommissionRate] = useState({});
 
   useEffect(() => {
     fetchArtists();
@@ -43,26 +43,26 @@ const AdminPanel = () => {
     }
   };
 
-  const handleCommissionRateChange = (id, value) => {
-    console.log(`Commission rate for ${id} changed to ${value}`);
-    setCommissionRate(prev => ({ ...prev, [id]: value }));
-  };
+  // const handleCommissionRateChange = (id, value) => {
+  //   console.log(`Commission rate for ${id} changed to ${value}`);
+  //   setCommissionRate(prev => ({ ...prev, [id]: value }));
+  // };
 
-  const updateCommissionRate = async (id) => {
-    try {
-      console.log(`Updating commission rate for ${id} to ${commissionRate[id]}`);
-      const rate = commissionRate[id];
-      if (!rate) {
-        alert('Please enter a commission rate before submitting.');
-        return;
-      }
-      await api.patch('/users/update-commission-rate', { id: id, commissionRate: rate });
-      console.log(`Commission rate for ${id} updated to ${rate}`);
-      alert('Commission rate updated successfully.');
-    } catch (err) {
-      alert('Failed to update commission rate.');
-    }
-  };
+  // const updateCommissionRate = async (id) => {
+  //   try {
+  //     console.log(`Updating commission rate for ${id} to ${commissionRate[id]}`);
+  //     const rate = commissionRate[id];
+  //     if (!rate) {
+  //       alert('Please enter a commission rate before submitting.');
+  //       return;
+  //     }
+  //     await api.patch('/users/update-commission-rate', { id: id, commissionRate: rate });
+  //     console.log(`Commission rate for ${id} updated to ${rate}`);
+  //     alert('Commission rate updated successfully.');
+  //   } catch (err) {
+  //     alert('Failed to update commission rate.');
+  //   }
+  // };
 
   const filteredArtists =
     filter === 'all' ? artists : artists.filter(artist => artist.status === filter);
@@ -228,7 +228,7 @@ const AdminPanel = () => {
                           >
                             Reject
                           </button>
-                           <input
+                           {/* <input
                             type="number"
                             placeholder="Commission Rate (%)"
                             value={commissionRate[artist._id] || ''}
@@ -257,7 +257,7 @@ const AdminPanel = () => {
                             }}
                           >
                             Submit Rate
-                          </button>
+                          </button> */}
                         </>
                       )}
                       {artist.status === 'approved' && (

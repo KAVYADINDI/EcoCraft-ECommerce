@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
       return this.role === 'artist' ? 'request_received' : undefined;
     }
   },
-  commissionRate: { type: Number, default: 0 },
+ // commissionRate: { type: Number, default: 0 },
 
 }, { timestamps: true });
 

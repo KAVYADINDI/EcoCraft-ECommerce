@@ -37,7 +37,7 @@ const ArtistDashboard = () => {
           <>
             <p><strong>Total Orders:</strong> {stats.totalOrders}</p>
             <p><strong>Total Order Value:</strong> ${stats.totalOrderValue.toFixed(2)}</p>
-            <p><strong>Income after commission:</strong> ${stats.totalIncome.toFixed(2)}</p>
+            <p><strong>Income:</strong> ${stats.totalPayout.toFixed(2)}</p>
             <p><strong>Shipped:</strong> {stats.shipped} | <strong>Pending:</strong> {stats.pending} | <strong>Cancelled:</strong> {stats.cancellations}</p>
 
             <h2 style={{ marginTop: '2rem', marginBottom: '1rem' }}><strong>Top Selling Products</strong></h2>
