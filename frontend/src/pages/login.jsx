@@ -24,10 +24,13 @@ const Login = () => {
         console.log('User ID saved to localStorage:', user._id);  
       }
       if (role === 'artist') {
+        localStorage.setItem('role', 'artist');
         navigate('/artist/dashboard');
       } else if (role === 'admin') {
+        localStorage.setItem('role', 'admin');
         navigate('/admin/dashboard');
       } else if (role === 'customer') {
+        localStorage.setItem('role', 'customer');
         navigate('/customer/dashboard');
       }
     } catch (err) {
