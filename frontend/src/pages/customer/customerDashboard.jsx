@@ -120,6 +120,7 @@ const CustomerDashboard = () => {
                     >
                       <h4 style={{ color: '#256029', marginBottom: '0.5rem', fontWeight: 'bold' }}>{product.title}</h4>
                       <p><strong>Artist ID:</strong> {artistMap[product.artistID] ?? product.artistID}</p>
+                      <p><strong>CopyRight :</strong> {product.copyrightText ? <span>{product.copyrightText}</span> : <span>No Copyright</span>}</p>
                       <p><strong>Description:</strong> {product.description}</p>
                       <p><strong>Category:</strong> {product.category}</p>
                       <p><strong>Materials:</strong> {product.materials?.join(', ')}</p>
@@ -129,6 +130,7 @@ const CustomerDashboard = () => {
                       <p><strong>Return Policy:</strong> {product.returnPolicy}</p>
                       <p><strong>Tags:</strong> {product.tags?.join(', ')}</p>
                       <p><strong>Available Quantity:</strong> {product.quantityAvailable}</p>
+
                     </div>
                   )}
                 </div>

@@ -11,7 +11,17 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: Date, // Stores the expiry date/time for the reset token
 
   personalInfo: {
-    address: { type: String },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    dateOfBirth: { type: Date },
+
+    address: {
+      street: { type: String },
+      city: { type: String },
+      state: { type: String },
+      zipCode: { type: String },
+      country: { type: String },
+    },
     mobile: { type: String },
   },
 

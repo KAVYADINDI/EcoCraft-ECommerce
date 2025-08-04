@@ -21,7 +21,8 @@ const productSchema = new mongoose.Schema({
   dimensions: String,
   careInstructions: String,
   certified: { type: Boolean, default: false },
-  
+  copyrightText: { type: String, default: '' },
+
   returnPolicy: {
     type: String,
     default: 'We do not accept returns, but you can cancel your order before it ships.'
@@ -38,7 +39,7 @@ const productSchema = new mongoose.Schema({
   
   quantityAvailable: { type: Number, default: 0 },
   commissionRate: { type: Number, default: 0 },
-  listProduct: { type: Boolean, default: false },
+  listProduct: { type: Boolean, default: false }
 
 }, { timestamps: true });
 

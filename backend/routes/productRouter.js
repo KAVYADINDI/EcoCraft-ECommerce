@@ -9,6 +9,10 @@ const router = express.Router();
 // Add new product with image upload
 router.post('/', upload.array('images', 5), async (req, res) => {
   try {
+    console.log('Full req.body:', req.body);
+    console.log('copyrightText:', req.body.copyrightText);
+    console.log('copyrightNotice:', req.body.copyrightNotice);
+
     const imageUrls = req.files ? req.files.map(file => file.path) : [];
     const tags = req.body.tags
       ? req.body.tags.split(',').map(tag => tag.trim().toLowerCase())
@@ -17,7 +21,40 @@ router.post('/', upload.array('images', 5), async (req, res) => {
       ? req.body.materials.split(',').map(material => material.trim().toLowerCase())
       : [];
 
-    const product = await Product.create({ ...req.body, tags, materials, images: imageUrls });
+    const {
+      title,
+      description,
+      price,
+      dimensions,
+      careInstructions,
+      certified,
+      copyrightText,
+      copyrightNotice, // log this too
+      quantityAvailable,
+      category,
+      artistID,
+      listProduct
+    } = req.body;
+
+  
+    const product = new Product({
+      title,
+      description,
+      price,
+      materials,
+      dimensions,
+      careInstructions,
+      certified,
+      copyrightText,
+      tags,
+      quantityAvailable,
+      category,
+      images: imageUrls,
+      artistID,
+      listProduct
+    });
+
+    await product.save();
     res.status(201).json(product);
   } catch (err) {
     console.error('POST /api/products error:', err.message, err.stack, err);
@@ -43,11 +80,33 @@ router.put('/:id', upload.array('images', 5), async (req, res) => {
         : updateData.materials.split(',').map(material => material.trim().toLowerCase());
     }
 
-    const updated = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true });
-    if (!updated) {
+    console.log('PUT req.body:', req.body);
+    console.log('PUT copyrightText:', req.body.copyrightText);
+    console.log('PUT copyrightNotice:', req.body.copyrightNotice);
+
+    // Explicitly set certified and copyrightText fields
+    const updateFields = {
+      title: updateData.title,
+      description: updateData.description,
+      price: updateData.price,
+      materials: updateData.materials,
+      dimensions: updateData.dimensions,
+      careInstructions: updateData.careInstructions,
+      certified: updateData.certified,
+      copyrightText: updateData.copyrightText,
+      tags: updateData.tags,
+      quantityAvailable: updateData.quantityAvailable,
+      category: updateData.category,
+      images: updateData.images,
+      artistID: updateData.artistID,
+      listProducts: updateData.listProducts
+    };
+
+    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updateFields, { new: true });
+    if (!updatedProduct) {
       return res.status(404).json({ message: 'Product not found.' });
     }
-    res.json({ message: 'Product updated successfully.', product: updated });
+    res.json({ message: 'Product updated successfully.', product: updatedProduct });
   } catch (err) {
     console.error('PUT /api/products/:id error:', err.message, err.stack, err);
     let msg = err && err.message ? err.message : (typeof err === 'string' ? err : JSON.stringify(err));

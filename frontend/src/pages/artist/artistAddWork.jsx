@@ -8,7 +8,7 @@ const initialState = {
   dimensions: '',
   careInstructions: '',
   certified: false,
-  images: [],
+  copyrightText: '',     
   tags: '',
   quantityAvailable: 1,
   category: '',
@@ -79,9 +79,37 @@ const ArtistAddWork = ({ onSubmit, initialData }) => {
       <input name="careInstructions" value={form.careInstructions} onChange={handleChange} placeholder="Care Instructions" className="w-full border p-2 rounded" />
         </div>
       <label className="flex items-center gap-2">
-        <input name="certified" type="checkbox" checked={form.certified} onChange={handleChange} /> Certified
+        <input name="certified" type="checkbox" checked={form.certified} onChange={handleChange} /> Display copyright?
       </label>
-       <div className="mb-4">
+        {form.certified && (
+      <div className="mb-4">
+        <label className="block font-semibold mb-1">Copyright Notice</label>
+        <div className="flex gap-2">
+          <input
+            name="copyrightText"
+            value={form.copyrightText}
+            onChange={handleChange}
+            placeholder="e.g., © 2025 Your Name. All rights reserved."
+            className="w-full border p-2 rounded"
+          />
+          <button
+            type="button"
+            onClick={() =>
+              setForm((prev) => ({
+                ...prev,
+                copyrightText: prev.copyrightText + '©'
+              }))
+            }
+            className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm"
+            title="Insert © symbol"
+          >
+            + ©
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 mt-1">Add a copyright statement to display with this product.</p>
+      </div>
+    )}
+      <div className="mb-4">
       <label className="block font-semibold mb-1">Images</label>
       <input name="images" type="file" multiple onChange={handleImageChange} className="w-full" />
       </div>
@@ -108,4 +136,25 @@ const ArtistAddWork = ({ onSubmit, initialData }) => {
   );
 };
 
+const handleSubmit = (e) => {
+  e.preventDefault();
+
+  if (form.certified && !form.copyrightText.trim()) {
+    alert('Please enter your copyright notice.');
+    return;
+  }
+
+  const formData = new FormData();
+  Object.entries(form).forEach(([key, value]) => {
+    if (key === 'images' && value && value.length > 0) {
+      value.forEach((file) => formData.append('images', file));
+    } else {
+      formData.append(key, value);
+    }
+  });
+
+  onSubmit(formData);
+};
+
 export default ArtistAddWork;
+

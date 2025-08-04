@@ -61,7 +61,7 @@ router.post('/', async (req, res) => {
         priceAtPurchase: price,
         commissionAmount,
         artistPayout
-      };
+      }; 
     });
 
     const order = await Order.create({
@@ -169,6 +169,71 @@ router.patch('/:orderId/cancel', async (req, res) => {
   }
 });
 
+// PATCH: Mark a specific item as shipped in an order
+router.patch('/:orderId/items/:itemId/ship', async (req, res) => {
+  try {
+    const { orderId, itemId } = req.params;
+    const { trackingNumber, shippedDate } = req.body;
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+
+    const item = order.items.id(itemId);
+    if (!item) return res.status(404).json({ message: 'Order item not found.' });
+
+    item.shippingStatus = 'shipped';
+    item.shippedDate = shippedDate ? new Date(shippedDate) : new Date();
+    item.trackingNumber = trackingNumber || '';
+    await order.save();
+
+    res.status(200).json({ message: 'Item marked as shipped.', item });
+  } catch (err) {
+    console.error('PATCH /orders/:orderId/items/:itemId/ship error:', err);
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// PATCH: Accept an order item
+router.patch('/:orderId/items/:itemId/accept', async (req, res) => {
+  try {
+    const { orderId, itemId } = req.params;
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+
+    const item = order.items.id(itemId);
+    if (!item) return res.status(404).json({ message: 'Order item not found.' });
+
+    item.shippingStatus = 'orderAccepted';
+    await order.save();
+
+    res.status(200).json({ message: 'Item accepted.', item });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// PATCH: Mark a specific item as shipped in an order (single route, not duplicated)
+router.patch('/:orderId/items/:itemId/ship', async (req, res) => {
+  try {
+    const { orderId, itemId } = req.params;
+    const { trackingNumber, shippedDate } = req.body;
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+
+    const item = order.items.id(itemId);
+    if (!item) return res.status(404).json({ message: 'Order item not found.' });
+
+    item.shippingStatus = 'shipped';
+    item.shippedDate = shippedDate ? new Date(shippedDate) : new Date();
+    item.trackingNumber = trackingNumber || '';
+    await order.save();
+
+    res.status(200).json({ message: 'Item marked as shipped.', item });
+  } catch (err) {
+    console.error('PATCH /orders/:orderId/items/:itemId/ship error:', err);
+    res.status(400).json({ message: err.message });
+  }
+});
+
 // Get order statistics for an artist with optional date range
 router.get('/artist/:artistId/stats', async (req, res) => {
   const { artistId } = req.params;
@@ -260,6 +325,48 @@ router.get('/artist/:artistId/stats', async (req, res) => {
   } catch (err) {
     console.error('GET /artist/:artistId/stats error:', err);
     res.status(500).json({ message: 'Failed to fetch artist stats', error: err.message });
+  }
+});
+
+// PATCH: Update orderStatus for an order
+router.patch('/:orderId/status', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { orderStatus } = req.body;
+    if (!['pending', 'completed'].includes(orderStatus)) {
+      return res.status(400).json({ message: 'Invalid orderStatus value.' });
+    }
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+
+    order.orderStatus = orderStatus;
+    await order.save();
+
+    res.status(200).json({ message: 'Order status updated.', order });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// PATCH: Cancel a specific item in an order
+router.patch('/:orderId/items/:itemId/cancel', async (req, res) => {
+  try {
+    const { orderId, itemId } = req.params;
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+
+    const item = order.items.id(itemId);
+    if (!item) return res.status(404).json({ message: 'Order item not found.' });
+
+    if (item.shippingStatus === 'shipped') {
+      return res.status(400).json({ message: 'Cannot cancel a shipped item.' });
+    }
+    item.shippingStatus = 'cancelled';
+    await order.save();
+
+    res.status(200).json({ message: 'Item cancelled.', item });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 });
 

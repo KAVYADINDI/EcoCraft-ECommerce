@@ -22,21 +22,68 @@ const ArtistOrders = () => {
     fetchOrders();
   }, [artistId]);
 
-  const markAsShipped = async (orderId) => {
-    if (!window.confirm('Are you sure you want to mark this order as shipped?')) return;
+  const acceptItemOrder = async (orderId, itemId) => {
+    // Find the order and item to check status
+    const order = orders.find(o => o._id === orderId);
+    const item = order?.items.find(i => i._id === itemId);
+    if (item?.shippingStatus === 'cancelled') {
+      alert('This item has been cancelled and cannot be accepted.');
+      return;
+    }
+    if (!window.confirm('Accept this order item?')) return;
     try {
-      const res = await api.patch(`/orders/${orderId}/ship`);
+      const res = await api.patch(`/orders/${orderId}/items/${itemId}/accept`);
       if (res.status === 200) {
-        // Refetch latest orders
         const updated = await api.get(`/orders/artist/${artistId}`);
         setOrders(updated.data);
-        alert('Order marked as shipped.');
+        alert('Order item accepted.');
       } else {
-        alert('Failed to update order status.');
+        alert('Failed to accept item.');
       }
     } catch (err) {
-      console.error('Error updating order status:', err);
-      alert('Failed to update order status.');
+      console.error('Error accepting item:', err);
+      alert('Failed to accept item.');
+    }
+  };
+
+  const markItemAsShipped = async (orderId, itemId, trackingNumber, shippedDate) => {
+    // Find the order and item to check status
+    const order = orders.find(o => o._id === orderId);
+    const item = order?.items.find(i => i._id === itemId);
+    if (item?.shippingStatus === 'cancelled') {
+      alert('This item has been cancelled and cannot be marked as shipped.');
+      return;
+    }
+    if (!window.confirm('Mark this item as shipped?')) return;
+    try {
+      const res = await api.patch(`/orders/${orderId}/items/${itemId}/ship`, { trackingNumber, shippedDate });
+      if (res.status === 200) {
+        const updated = await api.get(`/orders/artist/${artistId}`);
+        setOrders(updated.data);
+        alert('Item marked as shipped.');
+      } else {
+        alert('Failed to update item status.');
+      }
+    } catch (err) {
+      console.error('Error updating item status:', err);
+      alert('Failed to update item status.');
+    }
+  };
+
+  const updateTrackingNumber = async (orderId, itemId, trackingNumber) => {
+    if (!trackingNumber) return;
+    try {
+      const res = await api.patch(`/orders/${orderId}/items/${itemId}/tracking`, { trackingNumber });
+      if (res.status === 200) {
+        const updated = await api.get(`/orders/artist/${artistId}`);
+        setOrders(updated.data);
+        alert('Tracking number updated.');
+      } else {
+        alert('Failed to update tracking number.');
+      }
+    } catch (err) {
+      console.error('Error updating tracking number:', err);
+      alert('Failed to update tracking number.');
     }
   };
 
@@ -57,40 +104,67 @@ const ArtistOrders = () => {
                 const artistItems = order.items.filter(item =>
                   item.productID && String(item.productID.artistID) === artistId
                 );
-
-                // Calculate artist's payout from these items
-                const totalPayout = artistItems.reduce((sum, item) => sum + (item.artistPayout || 0), 0);
+                if (artistItems.length === 0) return null;
 
                 return (
                   <li key={order._id} style={{ marginBottom: '1.2rem', borderBottom: '1px solid #eee', paddingBottom: '1rem' }}>
                     <div><strong>Order ID:</strong> {order._id}</div>
                     <div><strong>Customer ID:</strong> {order.customerID}</div>
                     <div>
-                      <strong>Items:</strong>
+                      <strong>Your Items:</strong>
                       <ul style={{ marginLeft: 16 }}>
                         {artistItems.map((item, idx) => (
-                          <li key={idx}>
+                          <li key={item._id || idx}>
                             {item.productID ? `${item.productID.title} x ${item.quantity} ($${item.priceAtPurchase?.toFixed(2) ?? '-'})` : null}
+                            <div>
+                              <strong>Item Shipping Status:</strong> {item.shippingStatus || order.shippingStatus}
+                              {item.shippingStatus === 'pending' && (
+                                <button
+                                  style={{ marginLeft: '1rem', background: '#256029', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.3rem 0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
+                                  onClick={() => acceptItemOrder(order._id, item._id)}
+                                >
+                                  Accept Order
+                                </button>
+                              )}
+                              {item.shippingStatus === 'orderAccepted' && (
+                                <div style={{ marginLeft: '1rem', marginTop: '0.5rem' }}>
+                                  <label>
+                                    <input
+                                      type="text"
+                                      placeholder="Enter tracking number"
+                                      id={`tracking-${order._id}-${item._id}`}
+                                      style={{ padding: '2px 6px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '8px' }}
+                                    />
+                                    <button
+                                      type="button"
+                                      style={{ background: 'green', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 10px', fontWeight: 'bold', cursor: 'pointer' }}
+                                      onClick={() => {
+                                        const trackingNumber = document.getElementById(`tracking-${order._id}-${item._id}`).value;
+                                        if (!trackingNumber) {
+                                          alert('Please enter a tracking number.');
+                                          return;
+                                        }
+                                        const shippedDate = new Date().toISOString();
+                                        markItemAsShipped(order._id, item._id, trackingNumber, shippedDate);
+                                      }}
+                                    >
+                                      Mark as Shipped
+                                    </button>
+                                  </label>
+                                </div>
+                              )}
+                              {item.shippingStatus === 'shipped' && (
+                                <div style={{ marginLeft: '1rem', color: 'black', marginTop: '0.5rem' }}>
+                                  <strong>Shipped Date:</strong> {item.shippedDate ? new Date(item.shippedDate).toLocaleString() : ''}
+                                  <br />
+                                  <strong>Tracking Number:</strong> {item.trackingNumber || ''}
+                                </div>
+                              )}
+                            </div>
                           </li>
                         ))}
                       </ul>
                     </div>
-                    <div><strong>Shipping Status:</strong> {order.shippingStatus}</div>
-
-                    {order.shippingStatus === 'pending' && (
-                      <button
-                        style={{ marginTop: '1rem', background: 'green', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.5rem 1.2rem', fontWeight: 'bold', cursor: 'pointer', marginRight: '0.7rem' }}
-                        onClick={() => markAsShipped(order._id)}
-                      >
-                        Mark as Shipped
-                      </button>
-                    )}
-
-                    {order.shippingStatus === 'shipped' && (
-                      <div style={{ marginTop: '0.5rem', color: '#256029', fontWeight: 'bold' }}>
-                        Received Payout: ${totalPayout.toFixed(2)}
-                      </div>
-                    )}
                   </li>
                 );
               })}
