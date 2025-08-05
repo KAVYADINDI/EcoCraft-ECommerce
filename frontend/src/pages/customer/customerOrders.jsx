@@ -73,7 +73,7 @@ const CustomerOrders = () => {
                             <span>
                               <br />
                               <b>Tracking Number:</b> {item.trackingNumber || 'N/A'}
-                              <br /><b>Shipment Date:</b> {item.shippedDate ? new Date(item.shippedDate).toLocaleDateString() : 'N/A'}
+                              <br /><b>Shipped Date:</b> {item.shippedDate ? new Date(item.shippedDate).toLocaleDateString() : 'N/A'}
                               <br />Item is shipped and should arrive in 5-7 business days.
                             </span>
                           )}

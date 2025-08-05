@@ -178,7 +178,7 @@ const Register = () => {
             <button onClick={closeModal} className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
             <h3 className="text-lg font-bold mb-2 text-green-700">Note for Sellers</h3>
             <p className="text-gray-700 text-base">
-             You must have received an email for further processing.
+             You will receive an email with forms for further processing.
             </p>
           </div>
         </div>
