@@ -3,9 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
 const Register = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [form, setForm] = useState({
+    userID: '',
+    email: '',
+    password: '',
+    role: 'customer',
+    firstName: '',
+    lastName: '',
+    street: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: '',
+    mobile: '',
+  });
   const [accountType, setAccountType] = useState('buy');
   const [showSellNote, setShowSellNote] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -13,18 +24,40 @@ const Register = () => {
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
+  const handleChange = e => {
+    const { name, value } = e.target;
+    setForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setSuccess('');
     try {
-      const res = await api.post('/auth/register', {
-        userID: name,
-        email,
-        password,
+      const address = {
+        street: form.street,
+        city: form.city,
+        state: form.state,
+        zipCode: form.zipCode,
+        country: form.country
+      };
+      const payload = {
+        userID: form.userID,
+        email: form.email,
+        password: form.password,
         role: accountType === 'buy' ? 'customer' : 'artist',
-      });
+        personalInfo: {
+          firstName: form.firstName,
+          lastName: form.lastName,
+          address,
+          mobile: form.mobile
+        }
+      };
+      await api.post('/auth/register', payload);
       setSuccess('Registration successful! Please check your email for further instructions.');
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
@@ -46,28 +79,76 @@ const Register = () => {
         <h2 className="text-2xl font-bold mb-4 text-green-700">Register</h2>
         {error && <div className="mb-2 text-red-600 text-center">{error}</div>}
         {success && <div className="mb-2 text-green-700 text-center">{success}</div>}
+        <label>User ID</label>
         <input
-          type="text"
-          placeholder="Enter your Full Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full mb-4 px-4 py-2 border border-gray-700 rounded-lg focus:outline-none"
+          name="userID"
+          value={form.userID}
+          onChange={handleChange}
+          required
+          className="w-full border p-2 rounded mb-2"
+          placeholder="User ID"
         />
+        <label>Email</label>
         <input
+          name="email"
           type="email"
-          placeholder="Enter a valid Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full mb-4 px-4 py-2 border border-gray-700 rounded-lg focus:outline-none"
+          value={form.email}
+          onChange={handleChange}
+          required
+          className="w-full border p-2 rounded mb-2"
+          placeholder="Email"
         />
+        <label>Password</label>
         <input
+          name="password"
           type="password"
-          placeholder="Enter password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-4 px-4 py-2 border border-gray-700 rounded-lg focus:outline-none"
+          value={form.password}
+          onChange={handleChange}
+          required
+          className="w-full border p-2 rounded mb-2"
+          placeholder="Password"
         />
-         <div className="flex justify-center mb-4">
+        <label>First Name</label>
+        <input
+          name="firstName"
+          value={form.firstName}
+          onChange={handleChange}
+          required
+          className="w-full border p-2 rounded mb-2"
+          placeholder="First Name"
+        />
+        <label>Last Name</label>
+        <input
+          name="lastName"
+          value={form.lastName}
+          onChange={handleChange}
+          required
+          className="w-full border p-2 rounded mb-2"
+          placeholder="Last Name"
+        />
+        <label>Mobile</label>
+        <input
+          name="mobile"
+          value={form.mobile}
+          onChange={handleChange}
+          required
+          className="w-full border p-2 rounded mb-2"
+          placeholder="Mobile"
+        />
+        <fieldset className="mb-2">
+          <legend>Address:</legend><br />
+          <label>Street</label>
+          <input name="street" value={form.street} onChange={handleChange} required className="w-full border p-2 rounded mb-2" placeholder="Street" />
+          <label>City</label>
+          <input name="city" value={form.city} onChange={handleChange} required className="w-full border p-2 rounded mb-2" placeholder="City" />
+          <label>State</label>
+          <input name="state" value={form.state} onChange={handleChange} required className="w-full border p-2 rounded mb-2" placeholder="State" />
+          <label>Zip Code</label>
+          <input name="zipCode" value={form.zipCode} onChange={handleChange} required className="w-full border p-2 rounded mb-2" placeholder="Zip Code" />
+          <label>Country</label>
+          <input name="country" value={form.country} onChange={handleChange} required className="w-full border p-2 rounded mb-2" placeholder="Country" />
+        </fieldset>
+        <div className="flex justify-center mb-4">
           <button
             type="button"
             className={`px-4 py-2 rounded-l-lg border border-green-700 font-semibold ${accountType === 'buy' ? 'bg-green-700 text-white' : 'bg-white text-green-700'}`}
@@ -97,10 +178,7 @@ const Register = () => {
             <button onClick={closeModal} className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
             <h3 className="text-lg font-bold mb-2 text-green-700">Note for Sellers</h3>
             <p className="text-gray-700 text-base">
-              After you click register, our team will send an email to the address you provided with further instructions for artist onboarding.<br/><br/>
-              As part of our commitment to authenticity and sustainability, an EcoCraft admin will reach out to you via email to learn more about your story, the products you wish to list, the materials you use, and the eco-friendly benefits of your creations. This process helps us ensure that all products meet our standards.<br/><br/>
-              Once your information is reviewed and approved, you will receive access to list your products on our platform.<br/><br/>
-              Thank you for your interest in joining the EcoCraft community!
+             You must have received an email for further processing.
             </p>
           </div>
         </div>

@@ -1,12 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import NavigationBar from '../../components/navigationBar';
 import api from '../../api';
 
 const UserAccount = () => {
   const [user, setUser] = useState(null);
-  const [editField, setEditField] = useState(null); // 'address' | 'mobile' | 'userID' | 'email'
-  const [editValue, setEditValue] = useState('');
   const [loading, setLoading] = useState(true);
   const userId = localStorage.getItem('id');
 
@@ -16,7 +13,6 @@ const UserAccount = () => {
         const res = await api.get(`/users/${userId}`);
         setUser(res.data);
       } catch (err) {
-        // Only alert if the fetch itself fails, not for missing address/mobile
         if (err.response?.status !== 200) {
           alert('Failed to fetch user details.');
         }
@@ -27,48 +23,11 @@ const UserAccount = () => {
     fetchUser();
   }, [userId]);
 
-  const handleEdit = (field) => {
-    setEditField(field);
-    if (field === 'address' || field === 'mobile') {
-      setEditValue(user.personalInfo?.[field] || '');
-    } else {
-      setEditValue(user[field] || '');
-    }
-  };
-  const handleCancel = () => {
-    setEditField(null);
-    setEditValue('');
-  };
-  const handleChange = (e) => setEditValue(e.target.value);
-  const handleSave = async () => {
-    if (!editValue || editValue.trim() === '') {
-      alert('Please enter a value before saving.');
-      return;
-    }
-    try {
-      let patchData = {};
-      if (editField === 'address' || editField === 'mobile') {
-        const updated = { ...user.personalInfo, [editField]: editValue };
-        patchData.personalInfo = updated;
-      } else {
-        patchData[editField] = editValue;
-      }
-      await api.patch(`/users/${userId}`, patchData);
-      if (editField === 'address' || editField === 'mobile') {
-        setUser({ ...user, personalInfo: { ...user.personalInfo, [editField]: editValue } });
-      } else {
-        setUser({ ...user, [editField]: editValue });
-      }
-      setEditField(null);
-      setEditValue('');
-      alert('Info updated!');
-    } catch (err) {
-      alert('Failed to update info.');
-    }
-  };
-
   if (loading) return <div>Loading...</div>;
   if (!user) return <div>User not found.</div>;
+
+  const personalInfo = user.personalInfo || {};
+  const address = personalInfo.address || {};
 
   return (
     <div>
@@ -77,72 +36,33 @@ const UserAccount = () => {
         <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)', padding: '2.5rem 2rem', maxWidth: 500, width: '100%' }}>
           <h2 style={{ fontWeight: 'bold', fontSize: '1.6rem', marginBottom: '1.5rem', color: '#256029' }}>Account Details</h2>
           <div style={{ margin: '1rem 0' }}>
-            {/* User ID (Name) Field */}
-            <div style={{ marginBottom: '0.8rem', display: 'flex', alignItems: 'center' }}>
-              <strong style={{ minWidth: 80 }}>Name:</strong>
-              {editField === 'userID' ? (
-                <>
-                  <input name="userID" value={editValue} onChange={handleChange} style={{ width: '100%', padding: '0.5rem', borderRadius: 6, border: '1px solid #ccc', marginRight: 8 }} />
-                  <button onClick={handleSave} style={{ background: '#256029', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 1.1rem', fontWeight: 'bold', cursor: 'pointer', marginRight: 6 }}>Save</button>
-                  <button onClick={handleCancel} style={{ background: '#eee', color: '#333', border: 'none', borderRadius: 6, padding: '0.4rem 1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>Cancel</button>
-                </>
-              ) : (
-                <>
-                  <span style={{ flex: 1 }}>{user.userID}</span>
-                  <button onClick={() => handleEdit('userID')} style={{ background: '#256029', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 1.1rem', fontWeight: 'bold', cursor: 'pointer', marginLeft: 8 }}>Edit</button>
-                </>
-              )}
+            <div style={{ marginBottom: '0.8rem' }}>
+              <strong style={{ minWidth: 80 }}>First Name:</strong> <span>{personalInfo.firstName}</span>
             </div>
-            {/* Email Field */}
-            <div style={{ marginBottom: '0.8rem', display: 'flex', alignItems: 'center' }}>
-              <strong style={{ minWidth: 80 }}>Email:</strong>
-              {editField === 'email' ? (
-                <>
-                  <input name="email" value={editValue} onChange={handleChange} style={{ width: '100%', padding: '0.5rem', borderRadius: 6, border: '1px solid #ccc', marginRight: 8 }} />
-                  <button onClick={handleSave} style={{ background: '#256029', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 1.1rem', fontWeight: 'bold', cursor: 'pointer', marginRight: 6 }}>Save</button>
-                  <button onClick={handleCancel} style={{ background: '#eee', color: '#333', border: 'none', borderRadius: 6, padding: '0.4rem 1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>Cancel</button>
-                </>
-              ) : (
-                <>
-                  <span style={{ flex: 1 }}>{user.email}</span>
-                  <button onClick={() => handleEdit('email')} style={{ background: '#256029', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 1.1rem', fontWeight: 'bold', cursor: 'pointer', marginLeft: 8 }}>Edit</button>
-                </>
-              )}
+            <div style={{ marginBottom: '0.8rem' }}>
+              <strong style={{ minWidth: 80 }}>Last Name:</strong> <span>{personalInfo.lastName}</span>
+            </div>
+            <div style={{ marginBottom: '0.8rem' }}>
+              <strong style={{ minWidth: 80 }}>Email:</strong> <span>{user.email}</span>
             </div>
           </div>
           <div style={{ margin: '1.5rem 0' }}>
             <h3 style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#256029' }}>Personal Info</h3>
-            {/* Address Field */}
-            <div style={{ marginBottom: '0.8rem', display: 'flex', alignItems: 'center' }}>
+            <div style={{ marginBottom: '0.8rem' }}>
               <strong style={{ minWidth: 80 }}>Address:</strong>
-              {editField === 'address' ? (
-                <>
-                  <input name="address" value={editValue} onChange={handleChange} style={{ width: '100%', padding: '0.5rem', borderRadius: 6, border: '1px solid #ccc', marginRight: 8 }} />
-                  <button onClick={handleSave} style={{ background: '#256029', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 1.1rem', fontWeight: 'bold', cursor: 'pointer', marginRight: 6 }}>Save</button>
-                  <button onClick={handleCancel} style={{ background: '#eee', color: '#333', border: 'none', borderRadius: 6, padding: '0.4rem 1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>Cancel</button>
-                </>
-              ) : (
-                <>
-                  <span style={{ flex: 1 }}>{user.personalInfo?.address || '-'}</span>
-                  <button onClick={() => handleEdit('address')} style={{ background: '#256029', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 1.1rem', fontWeight: 'bold', cursor: 'pointer', marginLeft: 8 }}>Edit</button>
-                </>
-              )}
+              <br />
+              Street: <span>{address.street || '-'}</span>
+              <br />
+              City: <span>{address.city || '-'}</span>
+              <br />
+              State: <span>{address.state || '-'}</span>
+              <br />
+              Country: <span>{address.country || '-'}</span>
+              <br />
+              Zip Code: <span>{address.zipCode || '-'}</span>
             </div>
-            {/* Mobile Field */}
-            <div style={{ marginBottom: '0.8rem', display: 'flex', alignItems: 'center' }}>
-              <strong style={{ minWidth: 80 }}>Mobile:</strong>
-              {editField === 'mobile' ? (
-                <>
-                  <input name="mobile" value={editValue} onChange={handleChange} placeholder="+1 2345678901" style={{ width: '100%', padding: '0.5rem', borderRadius: 6, border: '1px solid #ccc', marginRight: 8 }} />
-                  <button onClick={handleSave} style={{ background: '#256029', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 1.1rem', fontWeight: 'bold', cursor: 'pointer', marginRight: 6 }}>Save</button>
-                  <button onClick={handleCancel} style={{ background: '#eee', color: '#333', border: 'none', borderRadius: 6, padding: '0.4rem 1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>Cancel</button>
-                </>
-              ) : (
-                <>
-                  <span style={{ flex: 1 }}>{user.personalInfo?.mobile || '-'}</span>
-                  <button onClick={() => handleEdit('mobile')} style={{ background: '#256029', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 1.1rem', fontWeight: 'bold', cursor: 'pointer', marginLeft: 8 }}>Edit</button>
-                </>
-              )}
+            <div style={{ marginBottom: '0.8rem' }}>
+              <strong style={{ minWidth: 80 }}>Mobile:</strong> <span>{personalInfo.mobile || '-'}</span>
             </div>
           </div>
         </div>

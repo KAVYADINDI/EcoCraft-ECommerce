@@ -1,7 +1,8 @@
+import User from '../models/User.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto'; 
-import User from '../models/User.js'; 
+
 // --- Helper function to generate JWT token ---
 const generateToken = (id, role) => {
     return jwt.sign({ id, role }, process.env.JWT_SECRET, {
@@ -12,7 +13,7 @@ const generateToken = (id, role) => {
 // Register a new user (admin, artist, customer)- POST /api/auth/register - Public
  
 const registerUser = async (req, res) => {
-    const { userID, email, password, role } = req.body;
+    const { userID, email, password, role, personalInfo } = req.body;
 
     // Field Validation
     if (!userID || !email || !password || !role) {
@@ -50,6 +51,18 @@ const registerUser = async (req, res) => {
             email,
             passwordHash,
             role,
+            personalInfo: {
+                firstName: personalInfo.firstName,
+                lastName: personalInfo.lastName,
+                address: {
+                    street: personalInfo.address?.street,
+                    city: personalInfo.address?.city,
+                    state: personalInfo.address?.state,
+                    zipCode: personalInfo.address?.zipCode,
+                    country: personalInfo.address?.country
+                },
+                mobile: personalInfo.mobile
+            },
             passwordHistory: [passwordHash], // Store initial password hash
         });
 
