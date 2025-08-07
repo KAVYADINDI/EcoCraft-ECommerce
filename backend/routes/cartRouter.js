@@ -146,4 +146,25 @@ router.delete('/:itemId', async (req, res) => {
   }
 });
 
+// Clear cart for a user on signout
+router.delete('/clear/:userId', async (req, res) => {
+  const { userId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ message: 'Invalid userId format' });
+  }
+  try {
+    const cart = await Cart.findOne({ customerID: new mongoose.Types.ObjectId(userId) });
+    if (!cart) {
+      return res.status(404).json({ message: 'Cart not found' });
+    }
+    cart.items = [];
+    cart.totalAmount = 0;
+    await cart.save();
+    res.status(200).json({ message: 'Cart cleared successfully' });
+  } catch (err) {
+    console.error('DELETE /cart/clear/:userId error:', err.message);
+    res.status(500).json({ message: 'Failed to clear cart', error: err.message });
+  }
+});
+
 export default router;

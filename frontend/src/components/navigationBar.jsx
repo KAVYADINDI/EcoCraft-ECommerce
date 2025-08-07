@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaBars, FaUserCircle, FaShoppingCart, FaStore, FaEnvelopeOpenText } from 'react-icons/fa';
 import leafLogo from '/leaf.svg';
 import { useNavigate, useLocation } from 'react-router-dom';
+import api from '../api';
 
 const categories = [
   'All Categories',
@@ -73,11 +74,22 @@ const NavigationBar = ({ onCategorySelect }) => {
     alert('Connection lost. Please check your internet.');
   };
 
-  const handleSignOut = (auto = false) => {
-    localStorage.clear();
-    if (auto) alert('You have been signed out due to inactivity.');
-    navigate('/login');
-  };
+  const handleSignOut = async (auto = false) => {
+  try {
+    if (storedRole === 'customer') {
+      const userId = localStorage.getItem('id');
+      if (userId) {
+        await api.delete(`/cart/clear/${userId}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error clearing cart during sign-out:', error);
+  }
+
+  localStorage.clear();
+  if (auto) alert('You have been signed out due to inactivity.');
+  navigate('/login');
+};
 
   const handleLogoClick = () => {
     if (storedRole === 'customer') navigate('/customer/dashboard');
@@ -249,4 +261,3 @@ const NavigationBar = ({ onCategorySelect }) => {
 };
 
 export default NavigationBar;
-

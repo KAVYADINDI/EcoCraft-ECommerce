@@ -18,7 +18,10 @@ const port = process.env.PORT || 4000
 connectdB()
 
 // middlewares
-app.use(cors())
+app.use(cors({
+  origin: 'http://localhost:5173', // or your frontend URL/port
+  credentials: true
+}));
 app.use(express.json()); // For parsing application/json
 
 // Add this GLOBAL logger

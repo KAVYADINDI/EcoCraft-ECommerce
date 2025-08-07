@@ -105,7 +105,7 @@ const ArtistStudio = () => {
                   <h3 className="text-lg font-semibold text-gray-800">{art.title}</h3>
                   <p className="text-gray-600 text-sm">Quantity available: <span className="font-bold">{art.quantityAvailable}</span></p>
                   <p className="text-gray-600 text-sm"><strong>Price:</strong> <span className="font-bold">{art.price}</span></p>
-                <p className="text-gray-600 text-sm"><strong>CommissionRate:</strong> <span className="font-bold">{art.commissionRate}</span></p>
+                <p className="text-gray-600 text-sm"><strong>CommissionRate:</strong> <span className="font-bold">{art.commissionRate} %</span></p>
                  <p className="text-gray-600 text-sm">
                     <strong>Listed:</strong> <span className="font-bold">
                       {art.listProduct ? 'Yes' : 'Waiting for admin\'s action'}

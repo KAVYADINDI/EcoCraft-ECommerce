@@ -1,31 +1,116 @@
-npm install
+Project Setup and Instructions
+This document provides a comprehensive guide for setting up, configuring, and running the ECOcraft-ECommerce web application.
 
-ADMIN:
+1. Prerequisites
+    Before you begin, ensure you have the following installed:
 
-kavya@gmail.com
-Kavya123
+    Node.js: https://nodejs.org/
 
-----
-CUSTOMER:
+    npm (comes with Node.js)
 
-varsha@gmail.com
-Varsha123
+    MongoDB: https://www.mongodb.com/try/download/community
 
-babith@gmail.com
-Babith123
+2. Backend Setup
+    The backend is built with Node.js and Express.
 
------
-registor ARTISTS:
+    A. Installation
 
-The ReMade
-remade@gmail.com
-Remade123
+        Navigate to the backend directory in your terminal:
+        cd backend
 
-Reclaimed Rhapsody
-rhapsody@gmail.com
-Rhapsody123
+        Install all required dependencies:
+        npm install
 
-Veridian Visions
-vv@gmail.com
-Visions123
+    B. Configuration (.env file)
 
+        Create a file named .env in the root of the backend folder.
+
+        Add the following environment variables to the .env file. Replace the placeholder values with your own:
+
+                BASE_URL=<Your frontend URL eg:http://localhost:xxxx/>
+                MONGODB_URI=<Your_MongoDB_Connection_String>
+                JWT_SECRET=<Your_Secret_JWT_Key>
+                CLOUDINARY_CLOUD_NAME=<Your_Cloudinary_Cloud_Name>
+                CLOUDINARY_API_KEY=<Your_Cloudinary_API_Key>
+                CLOUDINARY_API_SECRET=<Your_Cloudinary_API_Secret>
+
+        MONGODB_URI: Your MongoDB connection string. You can get this from MongoDB Atlas or use a local connection string like mongodb://127.0.0.1:27017/eco_craft_db.
+        JWT_SECRET: A long, random string used to sign JSON Web Tokens.
+        CLOUDINARY_*: Your credentials for Cloudinary. You can find these in your Cloudinary dashboard.
+
+    C. Running the Backend
+
+        Once configured, start the backend server:
+            npm start
+
+        The server will now be running, typically on http://localhost:4000.
+
+3. Frontend Setup
+The frontend is a React application.
+
+    A. Installation
+
+        Navigate to the frontend directory in a new terminal window:
+        cd frontend
+
+        Install all required dependencies:
+        npm install
+
+    B. Running the Frontend
+
+        Start the development server:
+        npm start
+        
+        The frontend application should open automatically in your web browser, usually at http://localhost:xxxx.
+
+
+4. Application Usage and Features
+    A. User Registration and Login
+
+        Access the http://localhost:xxxx/register page to create a new user account.
+
+        Once an account is created, you can log in via http://localhost:xxxx`/login.
+
+    B. Creating an Admin Account
+
+        To create an admin account, you will need to manually update a user's role in the MongoDB database.
+
+        After creating a user through the registration page, connect to your MongoDB database.
+
+        Find the users collection and locate the user you want to make an admin.
+
+        Update the role field from "customer" to "admin".
+
+        The admin dashboard will now be accessible to this user.
+
+    C. Working with the Application (as an Admin)
+
+        Admin Dashboard: The admin dashboard allows you to onboard artists, listProducts.
+
+        Product Management: Use the admin dashboard to add commissionRates to added products and list them.
+
+        ArtistManagement: Use the admin Panel to review artist forms and onboard artists.
+
+    D. Working with the Application (as an Artist)
+
+        Artist Account: Once a user is registers as an artist, they gain access to the artist-specific pages once admin reviews their files and approves them.
+
+        Add Work: The artistAddWork.jsx page in artistStudio allows artists to upload their artwork to the store. This process will use the Cloudinary middleware for image handling.
+
+        Update Work: Artists can update the details of their artwork through the artistUpdateWork.jsx page.
+
+        View Orders: Artists can track orders for their specific products on the artistOrders.jsx page. They can accept the orders and update the shipment status and tracking information.
+
+    E. As a Customer
+
+        Browse Products: The home.jsx and other product pages allow customers to browse and view available products.
+
+        Shopping Cart: Products can be added to the shopping cart, which is managed on the cart.jsx page.
+
+        Placing Orders: The application provides a checkout flow to place an order, which will be recorded in the database.
+
+        Account Management: The userAccount.jsx page allows customers to view and manage their profile details.
+
+        Viewing Orders: The customerOrders.jsx page provides a history of all past orders placed by the customer. They can also cancel procut items by item if they are not already shipped.
+
+        Password Reset: If a user forgets their password, they can use the forgotPassword.jsx and changePassword.jsx pages to reset it.
